@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Invoice Generator — We App Testers</title>
 <link rel="stylesheet" href="invoice.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 /* ══════════════════════════════════════════
    FORM PANEL  (screen-only, no-print)
@@ -229,7 +230,7 @@
 
   <!-- Service Description -->
   <div class="form-section">
-    <div class="form-section-title">Service</div>
+    <div class="form-section-title">Service (Select Multiple)</div>
     <!-- Service tabs -->
     <div id="service-tabs" class="radio-pills"></div>
 
@@ -254,20 +255,6 @@
         <div class="form-group" style="grid-column:1 / -1">
           <label>Custom Unit Price</label>
           <input id="inp-custom-svc-price" type="number" min="0" step="0.01" placeholder="Enter amount">
-        </div>
-      </div>
-    </div>
-
-    <!-- Standard service description (shown when not Custom) -->
-    <div id="standard-svc-wrap" style="margin-top:10px">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Description</label>
-          <input id="inp-svc-desc" type="text" placeholder="14-Day Closed Testing Service">
-        </div>
-        <div class="form-group">
-          <label>Quantity</label>
-          <input id="inp-svc-qty" type="number" min="1" placeholder="1" value="1">
         </div>
       </div>
     </div>
@@ -321,7 +308,7 @@
   </div>
 </div><!-- /form-panel -->
 
-<button id="btn-print" class="no-print">🖨&nbsp; Print / Save as PDF</button>
+<button id="btn-print" class="no-print">📥&nbsp; Download PDF</button>
 
 <!-- ══════════════════════════════════════════
      INVOICE PAGE  (A4, printed)
@@ -405,13 +392,7 @@
           <th>Amount</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td id="disp-svc-desc">14-Day Closed Testing Service</td>
-          <td id="disp-svc-qty">1</td>
-          <td id="disp-svc-unit">—</td>
-          <td class="amount" id="disp-svc-amount">—</td>
-        </tr>
+      <tbody id="svc-tbody">
       </tbody>
     </table>
 
