@@ -4,9 +4,7 @@
 
 /* ── Predefined services ──────────────────────────── */
 const SERVICES = [
-  { id:'s1', label:'14-Day Closed Testing',  desc:'14-Day Closed Testing Service',     unit:1 },
-  { id:'s2', label:'7-Day Testing',          desc:'7-Day Closed Testing Service',      unit:1 },
-  { id:'s3', label:'Screenshot Review',      desc:'Screenshot Review & QA Report',     unit:1 },
+  { id:'s1', label:'14-Day Testing',          desc:'14-Day Closed Testing Service',     unit:1 },
   { id:'sc', label:'Custom Service',         desc:'',                                  unit:1, custom:true },
 ];
 
@@ -23,13 +21,9 @@ const DEFAULT_NOTES = 'Thank you for choosing We App Testers. Payment has been r
 
 /* ── State ────────────────────────────────────────── */
 let state = {
-  /* service */
-  service: SERVICES[0],
-  svcDesc: SERVICES[0].desc,
-  svcQty: 1,
-  svcCustomDesc: '',
-  svcCustomUnit: '',    /* label only, e.g. "per tester" */
-
+  /* services - now support multiple */
+  services: [],
+  
   /* pricing */
   preset: null,
   unitPrice: 0,         /* base unit price */
@@ -74,8 +68,8 @@ function buildInvNum() {
 
 /* ── Derived price values ─────────────────────────── */
 function lineTotal() {
-  /* Unit price × quantity */
-  return state.unitPrice * state.svcQty;
+  /* Unit price × number of services selected */
+  return state.unitPrice * state.services.length;
 }
 function subtotal() {
   /* Before agreed-price discount */
@@ -92,24 +86,24 @@ function effectivePaid() {
   return state.payments.reduce((s,p) => s + (parseFloat(p.amount)||0), 0);
 }
 
-/* ── Render service selector tabs ─────────────────── */
+/* ── Render service selector tabs (checkboxes now) ── */
 function renderServiceTabs() {
   const wrap = document.getElementById('service-tabs');
   if (!wrap) return;
   wrap.innerHTML = '';
   SERVICES.forEach(s => {
+    const isChecked = state.services.some(srv => srv.id === s.id);
     const lbl = document.createElement('label');
-    lbl.className = 'preset-label' + (state.service?.id===s.id ? ' active' : '');
-    lbl.innerHTML = `<input type="radio" name="service" value="${s.id}" ${state.service?.id===s.id?'checked':''}><span>${s.label}</span>`;
-    lbl.querySelector('input').addEventListener('change', () => {
-      state.service = s;
-      if (!s.custom) {
-        state.svcDesc = s.desc;
-        document.getElementById('inp-svc-desc').value = s.desc;
-        setText('disp-svc-desc', s.desc);
+    lbl.className = 'preset-label' + (isChecked ? ' active' : '');
+    lbl.innerHTML = `<input type="checkbox" name="service" value="${s.id}" ${isChecked?'checked':''}><span>${s.label}</span>`;
+    lbl.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        state.services.push(s);
+      } else {
+        state.services = state.services.filter(srv => srv.id !== s.id);
       }
-      toggleCustomServiceFields();
       renderServiceTabs();
+      toggleCustomServiceFields();
       updateCalculations();
     });
     wrap.appendChild(lbl);
@@ -119,7 +113,8 @@ function renderServiceTabs() {
 function toggleCustomServiceFields() {
   const cw = document.getElementById('custom-svc-wrap');
   if (!cw) return;
-  cw.style.display = state.service?.custom ? '' : 'none';
+  const hasCustom = state.services.some(s => s.custom);
+  cw.style.display = hasCustom ? '' : 'none';
 }
 
 /* ── Render preset radios ─────────────────────────── */
@@ -175,6 +170,30 @@ function renderPaymentEntries() {
   });
 }
 
+/* ── Render service descriptions in table ─────────── */
+function renderServiceDescriptions() {
+  const tbody = document.getElementById('svc-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  
+  const cur = state.currency;
+  
+  state.services.forEach((svc, idx) => {
+    const desc = svc.custom 
+      ? (document.getElementById('inp-custom-svc-desc')?.value || 'Custom Service')
+      : svc.desc;
+    
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${desc}</td>
+      <td>1</td>
+      <td>${state.unitPrice > 0 ? fmt(state.unitPrice, cur) : '—'}</td>
+      <td class="amount">${state.unitPrice > 0 ? fmt(state.unitPrice, cur) : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 /* ── Master update ────────────────────────────────── */
 function updateCalculations() {
   const cur   = state.currency;
@@ -185,18 +204,8 @@ function updateCalculations() {
   const isPaid  = final > 0 && balance <= 0.005;
   const isOut   = final > 0 && balance >  0.005;
 
-  /* ── Service table row ── */
-  const svcDesc = state.service?.custom
-    ? (state.svcCustomDesc || 'Custom Service')
-    : (state.svcDesc || '14-Day Closed Testing Service');
-  const unitLabel = state.service?.custom
-    ? (state.svcCustomUnit || '—')
-    : (state.unitPrice > 0 ? fmt(state.unitPrice, cur) : '—');
-
-  setText('disp-svc-desc',   svcDesc);
-  setText('disp-svc-qty',    String(state.svcQty));
-  setText('disp-svc-unit',   state.unitPrice > 0 ? fmt(state.unitPrice, cur) : '—');
-  setText('disp-svc-amount', sub > 0 ? fmt(sub, cur) : '—');
+  /* ── Service table rows ── */
+  renderServiceDescriptions();
 
   /* ── Summary ── */
   // Subtotal
@@ -291,6 +300,19 @@ function setText(id,v){ const e=document.getElementById(id); if(e) e.textContent
 function show(id){ const e=document.getElementById(id); if(e) e.style.display=''; }
 function hide(id){ const e=document.getElementById(id); if(e) e.style.display='none'; }
 
+/* ── PDF Download ─────────────────────────────────── */
+function downloadPDF() {
+  const element = document.getElementById('invoice-page');
+  const opt = {
+    margin: 0,
+    filename: 'invoice.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(element).save();
+}
+
 /* ── Init ─────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -379,37 +401,15 @@ document.addEventListener('DOMContentLoaded', () => {
     durInp.addEventListener('input', e => setText('disp-duration', e.target.value.trim() || '14 Days'));
   }
 
-  /* ── Service selector tabs ── */
+  /* ── Service selector tabs (checkboxes) ── */
   renderServiceTabs();
   toggleCustomServiceFields();
 
-  /* ── Service description (standard) ── */
-  const svcDescInp = document.getElementById('inp-svc-desc');
-  if (svcDescInp) {
-    svcDescInp.value = state.svcDesc;
-    svcDescInp.addEventListener('input', e => {
-      state.svcDesc = e.target.value || SERVICES[0].desc;
-      updateCalculations();
-    });
-  }
-
-  /* ── Quantity ── */
-  const qtyInp = document.getElementById('inp-svc-qty');
-  if (qtyInp) {
-    qtyInp.value = '1';
-    qtyInp.addEventListener('input', e => {
-      state.svcQty = Math.max(1, parseInt(e.target.value)||1);
-      updateCalculations();
-    });
-  }
-
   /* ── Custom service fields ── */
   document.getElementById('inp-custom-svc-desc')?.addEventListener('input', e => {
-    state.svcCustomDesc = e.target.value;
     updateCalculations();
   });
   document.getElementById('inp-custom-svc-unit')?.addEventListener('input', e => {
-    state.svcCustomUnit = e.target.value;
     updateCalculations();
   });
   document.getElementById('inp-custom-svc-price')?.addEventListener('input', e => {
@@ -473,8 +473,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ── Print ── */
-  document.getElementById('btn-print')?.addEventListener('click', () => window.print());
+  /* ── PDF Download button ── */
+  document.getElementById('btn-print')?.addEventListener('click', downloadPDF);
 
   /* ── Initial render ── */
   updateCalculations();
