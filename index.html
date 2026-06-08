@@ -5,30 +5,27 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Invoice Generator — We App Testers</title>
 <link rel="stylesheet" href="invoice.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
-<!-- ════════════════════════════════════
-     FORM PANEL  (only this is visible)
-════════════════════════════════════ -->
+<!-- FORM PANEL -->
 <div id="form-panel">
   <h2>Invoice Generator — We App Testers</h2>
 
-  <!-- ── Client Info ── -->
+  <!-- Client Info -->
   <div class="form-section">
     <div class="form-section-title">Client Information</div>
     <div class="form-grid">
       <div class="form-group">
-        <label>Client Name *</label>
-        <input id="inp-client-name" type="text" placeholder="e.g. Sumit Kumar">
+        <label>Client Name <span class="required">*</span></label>
+        <input id="inp-client-name" type="text" placeholder="e.g. Sumit Kumar" autocomplete="off">
       </div>
       <div class="form-group">
-        <label>Client Email <span style="font-weight:400;text-transform:none;font-size:9px">(optional)</span></label>
+        <label>Client Email <span class="optional">(optional)</span></label>
         <input id="inp-client-email" type="email" placeholder="client@gmail.com">
       </div>
       <div class="form-group">
-        <label>Client Phone <span style="font-weight:400;text-transform:none;font-size:9px">(optional)</span></label>
+        <label>Client Phone <span class="optional">(optional)</span></label>
         <input id="inp-client-phone" type="text" placeholder="+91 9876543210">
       </div>
       <div class="form-group">
@@ -38,7 +35,7 @@
     </div>
   </div>
 
-  <!-- ── Invoice Number ── -->
+  <!-- Invoice Number -->
   <div class="form-section">
     <div class="form-section-title">Invoice Number</div>
     <div class="inv-num-parts">
@@ -48,15 +45,15 @@
       <input id="inp-inv-p2" type="text" placeholder="App Code e.g. 27FB"
              style="flex:1">
       <span class="inv-num-sep">–</span>
-      <input id="inp-inv-p3" type="text" maxlength="4"
-             style="width:70px;flex:none;text-align:center">
+      <input id="inp-inv-p3" type="text" maxlength="8" placeholder="Year"
+             style="width:80px;flex:none;text-align:center">
     </div>
     <div class="inv-num-preview">Preview: <strong id="inv-num-preview">WAT-2026</strong></div>
   </div>
 
-  <!-- ── App Testing Details ── -->
+  <!-- App Testing Details -->
   <div class="form-section">
-    <div class="form-section-title">App & Test Details</div>
+    <div class="form-section-title">App &amp; Test Details</div>
     <div class="form-grid">
       <div class="form-group">
         <label>App Name</label>
@@ -78,7 +75,7 @@
     </div>
   </div>
 
-  <!-- ── Services ── -->
+  <!-- Services -->
   <div class="form-section">
     <div class="form-section-title">Services (add one or multiple)</div>
     <div id="service-list"></div>
@@ -88,7 +85,7 @@
     </div>
   </div>
 
-  <!-- ── Package Price Preset ── -->
+  <!-- Package Price Preset -->
   <div class="form-section">
     <div class="form-section-title">Package Price Preset</div>
     <div id="preset-radios" class="preset-pills"></div>
@@ -100,7 +97,6 @@
       <input id="inp-custom-price" type="number" min="0" step="0.01"
              placeholder="Enter amount">
     </div>
-    <!-- Final agreed price -->
     <div class="agreed-row">
       <label>Final Agreed Price</label>
       <input id="inp-agreed-price" type="number" min="0" step="0.01"
@@ -109,14 +105,12 @@
     </div>
   </div>
 
-  <!-- ── Payment History ── -->
+  <!-- Payment History -->
   <div class="form-section">
     <div class="form-section-title">
       Payment History
-      <span style="font-weight:400;color:#bbb;font-size:9px;margin-left:6px">
-        Leave empty = full payment assumed automatically
-      </span>
     </div>
+    <div class="payment-hint">Leave empty — full payment will be assumed automatically</div>
     <div id="payment-list"></div>
     <button id="btn-add-payment" class="btn-add">+ Add Payment Entry</button>
     <label class="manual-toggle">
@@ -130,7 +124,7 @@
     </div>
   </div>
 
-  <!-- ── Notes ── -->
+  <!-- Notes -->
   <div class="form-section">
     <div class="form-section-title">Notes</div>
     <div class="form-group">
@@ -139,8 +133,11 @@
   </div>
 </div><!-- /form-panel -->
 
-<!-- Download button -->
-<button id="btn-download">⬇ &nbsp;Download Invoice PDF</button>
+<!-- Action Buttons -->
+<div class="action-row">
+  <button id="btn-reset" class="btn-reset">↺ Reset Form</button>
+  <button id="btn-download">⬇ &nbsp;Download Invoice PDF</button>
+</div>
 
 <script src="invoice.js"></script>
 </body>
