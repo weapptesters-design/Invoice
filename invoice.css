@@ -257,3 +257,96 @@ body{
   .preset-pill{padding:6px 11px;font-size:12px}
   .svc-fg{min-width:100%}
 }
+
+/* ════════════════════════════════
+   FIXES & ADDITIONS
+════════════════════════════════ */
+
+/* Bigger labels — minimum readable size */
+.form-group label,
+.svc-fg label {
+  font-size: 11px !important;
+}
+.form-section-title {
+  font-size: 11px !important;
+}
+
+/* Required star */
+.required {
+  color: #e00;
+  font-weight: 700;
+}
+/* Optional badge */
+.optional {
+  font-weight: 400;
+  text-transform: none;
+  font-size: 10px;
+  color: #aaa;
+}
+
+/* Payment section hint — more visible */
+.payment-hint {
+  font-size: 12px;
+  color: #888;
+  background: #fffbef;
+  border: 1px solid #e8c96a;
+  border-radius: 6px;
+  padding: 7px 12px;
+  margin-bottom: 10px;
+}
+
+/* Focus-visible for keyboard accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #1a1464;
+  outline-offset: 2px;
+}
+
+/* Action row: reset + download side by side */
+.action-row {
+  display: flex;
+  gap: 12px;
+  width: 760px;
+  max-width: 100%;
+  margin: 0 auto 24px;
+}
+
+#btn-download {
+  flex: 1;
+  width: auto;
+  margin: 0;
+}
+
+.btn-reset {
+  background: #fff;
+  border: 1.5px solid #ccc;
+  border-radius: 11px;
+  padding: 15px 20px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #666;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+  white-space: nowrap;
+}
+.btn-reset:hover {
+  background: #fff0f0;
+  border-color: #e00;
+  color: #c00;
+}
+
+/* Validation error box */
+#validation-errors {
+  display: none;
+}
+
+@media(max-width: 800px) {
+  .action-row { width: 100%; flex-direction: column; }
+  #btn-download { width: 100%; }
+  .btn-reset { width: 100%; }
+}
