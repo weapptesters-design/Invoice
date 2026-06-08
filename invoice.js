@@ -48,6 +48,37 @@ function buildInvNum() {
   return p2 ? `${p1}-${p2}-${p3}` : `${p1}-${p3}`;
 }
 
+/* ── Validation ─────────────────────────────── */
+function validateForm() {
+  const errors = [];
+  const clientName = (document.getElementById('inp-client-name')?.value||'').trim();
+  if (!clientName) errors.push('Client Name is required.');
+  if (state.services.length === 0) errors.push('Please add at least one service.');
+  const hasBlankService = state.services.some(s => !s.desc || !s.desc.trim());
+  if (hasBlankService) errors.push('All services must have a description.');
+  return errors;
+}
+
+function showErrors(errors) {
+  let errBox = document.getElementById('validation-errors');
+  if (!errBox) {
+    errBox = document.createElement('div');
+    errBox.id = 'validation-errors';
+    errBox.style.cssText = 'background:#fff0f0;border:1.5px solid #e00;border-radius:8px;padding:12px 16px;margin:0 auto 12px;width:760px;max-width:100%;font-size:13px;color:#c00;';
+    const btn = document.getElementById('btn-download');
+    btn.parentNode.insertBefore(errBox, btn);
+  }
+  errBox.innerHTML = '<strong>Please fix these issues:</strong><ul style="margin:6px 0 0 18px">' +
+    errors.map(e => `<li>${e}</li>`).join('') + '</ul>';
+  errBox.style.display = 'block';
+  errBox.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function clearErrors() {
+  const errBox = document.getElementById('validation-errors');
+  if (errBox) errBox.style.display = 'none';
+}
+
 /* ── Calculations ───────────────────────────── */
 function servicesSubtotal() {
   return state.services.reduce((sum,s) => sum + (parseFloat(s.unitPrice)||0)*(parseInt(s.qty)||1), 0);
@@ -61,6 +92,12 @@ function effectivePaid() {
   if (state.useManual) return parseFloat(state.manualReceived)||0;
   if (state.payments.length === 0) return finalAmount();
   return state.payments.reduce((s,p) => s+(parseFloat(p.amount)||0), 0);
+}
+
+/* ── Master update ──────────────────────────── */
+function updateAll() {
+  /* Keeps state consistent; can be extended for live preview */
+  clearErrors();
 }
 
 /* ── Render service rows (form) ─────────────── */
@@ -187,12 +224,7 @@ function renderPaymentEntries() {
   });
 }
 
-/* ── Master update (PDF data only, no preview) ── */
-function updateAll() {
-  /* Nothing to update live since no preview — just keep state consistent */
-}
-
-/* ── Build invoice HTML for PDF ─────────────── */
+/* ── Build invoice HTML for PDF printing ─────── */
 function buildInvoiceHTML() {
   const cur     = state.currency;
   const sub     = servicesSubtotal();
@@ -296,7 +328,7 @@ function buildInvoiceHTML() {
   const notesHTML = notes ? `
     <div style="display:flex;align-items:flex-start;gap:14px;background:#f0faf0;border:1.5px solid #4CAF50;border-radius:10px;padding:14px 18px;margin-bottom:28px">
       <div style="width:28px;height:28px;background:#4CAF50;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
-        <span style="color:#fff;font-size:15px;font-weight:700">✓</span>
+        <span style="color:#fff;font-size:15px;font-weight:700">&#10003;</span>
       </div>
       <div style="font-family:'DM Sans',sans-serif;font-size:12.5px;color:#1a1a1a;line-height:1.65">
         <strong style="display:block;margin-bottom:3px;color:#1B5E20">${escHtml(notes.split('.')[0])}.</strong>
@@ -316,6 +348,9 @@ function buildInvoiceHTML() {
       <div style="font-size:13.5px;color:#222;font-weight:500">${escHtml(pkg)}</div>
     </div>` : '';
 
+  /* NOTE: Logo uses data-uri placeholder — replace with your actual base64 logo for offline use */
+  const logoSrc = 'https://i.ibb.co/bM7b6WSn/Icon-comp.png';
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -328,71 +363,54 @@ function buildInvoiceHTML() {
     font-family:'DM Sans',sans-serif;
     background:#fff;
     color:#222;
-    width:794px;
-    margin:0 auto;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
   }
   .page{
-    width:794px;
-    min-height:1123px;
+    width:210mm;
+    min-height:297mm;
     background:#fff;
     padding:0;
     display:flex;
     flex-direction:column;
+    margin:0 auto;
+  }
+  @media print {
+    html,body { width:210mm; height:297mm; margin:0; padding:0; }
+    .page { width:210mm; min-height:297mm; page-break-after:avoid; }
+    @page { size:A4; margin:0; }
   }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <!-- ═══ HEADER ═══ -->
+  <!-- HEADER -->
   <div style="background:#fff;padding:28px 40px 22px;border-bottom:3px solid #1a1464;display:flex;justify-content:space-between;align-items:flex-start;gap:24px">
-
-    <!-- Left: Logo + Company -->
     <div style="display:flex;align-items:center;gap:16px">
-      <img src="https://i.ibb.co/bM7b6WSn/Icon-comp.png" style="width:72px;height:72px;object-fit:contain" crossorigin="anonymous">
+      <img src="${logoSrc}" style="width:72px;height:72px;object-fit:contain" crossorigin="anonymous" onerror="this.style.display='none'">
       <div>
-        <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:24px;color:#1a1464;letter-spacing:.04em;text-transform:uppercase;line-height:1">
-          WE APP TESTERS
-        </div>
+        <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:24px;color:#1a1464;letter-spacing:.04em;text-transform:uppercase;line-height:1">WE APP TESTERS</div>
         <div style="margin-top:10px;line-height:2">
-          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#333">
-            <span style="color:#1a1464;font-size:14px">📞</span> +91 9122061839
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#333">
-            <span style="color:#1a1464;font-size:14px">✉</span> contact@weapptesters.com
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#333">
-            <span style="color:#1a1464;font-size:14px">🌐</span> www.weapptesters.com
-          </div>
+          <div style="font-size:12.5px;color:#333">&#128222; +91 9122061839</div>
+          <div style="font-size:12.5px;color:#333">&#9993; contact@weapptesters.com</div>
+          <div style="font-size:12.5px;color:#333">&#127760; www.weapptesters.com</div>
         </div>
       </div>
     </div>
-
-    <!-- Right: Invoice info -->
     <div style="border-left:2px solid #eee;padding-left:32px;min-width:260px">
-      <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:22px;color:#1a1464;letter-spacing:.03em;text-transform:uppercase;margin-bottom:16px">
-        ${titleText}
-      </div>
+      <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:22px;color:#1a1464;letter-spacing:.03em;text-transform:uppercase;margin-bottom:16px">${titleText}</div>
       <table style="width:100%;border-collapse:collapse">
         <tr>
-          <td style="padding:6px 0;font-size:12px">
-            <span style="color:#1a1464;margin-right:8px">📋</span>
-            <strong style="font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#555">INVOICE NO.</strong>
-          </td>
-          <td style="padding:6px 0;font-size:13px;font-weight:600;color:#222;text-align:right">${invNum}</td>
+          <td style="padding:6px 0;font-size:12px"><strong style="font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#555">INVOICE NO.</strong></td>
+          <td style="padding:6px 0;font-size:13px;font-weight:600;color:#222;text-align:right">${escHtml(invNum)}</td>
         </tr>
         <tr>
-          <td style="padding:6px 0;font-size:12px">
-            <span style="color:#1a1464;margin-right:8px">📅</span>
-            <strong style="font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#555">DATE ISSUED</strong>
-          </td>
-          <td style="padding:6px 0;font-size:13px;font-weight:600;color:#222;text-align:right">${dateStr}</td>
+          <td style="padding:6px 0;font-size:12px"><strong style="font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#555">DATE ISSUED</strong></td>
+          <td style="padding:6px 0;font-size:13px;font-weight:600;color:#222;text-align:right">${escHtml(dateStr)}</td>
         </tr>
         <tr>
-          <td style="padding:6px 0;font-size:12px">
-            <span style="color:#1a1464;margin-right:8px">⚠</span>
-            <strong style="font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#555">STATUS</strong>
-          </td>
+          <td style="padding:6px 0;font-size:12px"><strong style="font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#555">STATUS</strong></td>
           <td style="padding:6px 0;text-align:right">
             <span style="display:inline-block;padding:3px 14px;border:1.5px solid ${statusBorder};border-radius:4px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:.08em;color:${statusColor};background:${statusBg}">${statusLabel}</span>
           </td>
@@ -401,29 +419,24 @@ function buildInvoiceHTML() {
     </div>
   </div>
 
-  <!-- ═══ BILLED TO + APP DETAILS ═══ -->
+  <!-- BILLED TO + APP DETAILS -->
   <div style="padding:22px 40px;display:grid;grid-template-columns:1fr 1.6fr;gap:20px">
-
-    <!-- Billed To -->
     <div style="border:1.5px solid #e8e8e8;border-radius:10px;padding:18px 20px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <div style="width:32px;height:32px;background:#1a1464;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <span style="color:#fff;font-size:15px">👤</span>
+          <span style="color:#fff;font-size:15px">&#128100;</span>
         </div>
         <span style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#1a1464">BILLED TO</span>
       </div>
       ${clientLines}
     </div>
-
-    <!-- App & Test Details -->
     <div style="border:1.5px solid #e8e8e8;border-radius:10px;padding:18px 20px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <div style="width:32px;height:32px;background:#1a1464;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <span style="color:#fff;font-size:15px">⊞</span>
+          <span style="color:#fff;font-size:15px">&#9638;</span>
         </div>
-        <span style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#1a1464">APP & TEST DETAILS</span>
+        <span style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#1a1464">APP &amp; TEST DETAILS</span>
       </div>
-      <!-- App Name + Package -->
       <div style="display:grid;grid-template-columns:${pkg?'1fr 1fr':'1fr'};border:1px solid #eee;border-radius:7px;overflow:hidden;margin-bottom:10px">
         <div style="padding:10px 14px;${pkg?'border-right:1px solid #eee':''}">
           <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#999;margin-bottom:4px">APP NAME</div>
@@ -431,7 +444,6 @@ function buildInvoiceHTML() {
         </div>
         ${pkgCell}
       </div>
-      <!-- Testers + Duration -->
       <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #eee;border-radius:7px;overflow:hidden">
         <div style="padding:10px 14px;border-right:1px solid #eee">
           <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#999;margin-bottom:4px">TESTERS</div>
@@ -445,18 +457,15 @@ function buildInvoiceHTML() {
     </div>
   </div>
 
-  <!-- ═══ PRICING DETAILS ═══ -->
+  <!-- PRICING DETAILS -->
   <div style="padding:0 40px 20px">
-    <!-- Section header -->
     <div style="display:flex;align-items:center;gap:0;margin-bottom:14px">
       <div style="background:#1a1464;color:#fff;display:flex;align-items:center;gap:10px;padding:9px 20px;border-radius:6px 0 0 6px">
-        <span style="font-size:16px">📋</span>
+        <span style="font-size:16px">&#128203;</span>
         <span style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase">PRICING DETAILS</span>
       </div>
       <div style="flex:1;height:4px;background:linear-gradient(90deg,#1a1464,transparent)"></div>
     </div>
-
-    <!-- Table -->
     <table style="width:100%;border-collapse:collapse;border:1px solid #eee;border-radius:8px;overflow:hidden">
       <thead>
         <tr style="background:#f5f7fb">
@@ -468,8 +477,6 @@ function buildInvoiceHTML() {
       </thead>
       <tbody>${svcRows}</tbody>
     </table>
-
-    <!-- Summary -->
     <div style="display:flex;justify-content:flex-end;margin-top:16px">
       <table style="width:300px;border-collapse:collapse">
         <tr>
@@ -486,7 +493,7 @@ function buildInvoiceHTML() {
           <td style="padding:8px 16px;font-size:13px;font-weight:600;color:#1B5E20;text-align:right">${final>0?fmt(effectivePaid(),cur):'—'}</td>
         </tr>
         ${extraHTML}
-        <tr style="background:${balBg};border:1.5px solid ${balBorder};border-radius:6px">
+        <tr style="background:${balBg}">
           <td style="padding:10px 16px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:${balColor}">Balance Due</td>
           <td style="padding:10px 16px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;color:${balColor};text-align:right">${final>0?fmt(bal,cur):'—'}</td>
         </tr>
@@ -494,12 +501,12 @@ function buildInvoiceHTML() {
     </div>
   </div>
 
-  <!-- ═══ PAYMENT HISTORY ═══ -->
+  <!-- PAYMENT HISTORY -->
   ${showPH ? `
   <div style="padding:0 40px 20px">
     <div style="display:flex;align-items:center;gap:0;margin-bottom:12px">
       <div style="background:#1B5E20;color:#fff;display:flex;align-items:center;gap:10px;padding:9px 20px;border-radius:6px 0 0 6px">
-        <span style="font-size:16px">💳</span>
+        <span style="font-size:16px">&#128179;</span>
         <span style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase">PAYMENT HISTORY</span>
       </div>
       <div style="flex:1;height:4px;background:linear-gradient(90deg,#1B5E20,transparent)"></div>
@@ -516,15 +523,10 @@ function buildInvoiceHTML() {
     </table>
   </div>` : ''}
 
-  <!-- ═══ NOTES + SIGNATURE ═══ -->
+  <!-- NOTES + SIGNATURE -->
   <div style="padding:4px 40px 24px;display:grid;grid-template-columns:1fr 1px 1fr;gap:0;align-items:center;margin-top:auto">
-    <!-- Notes -->
-    <div style="padding-right:28px">
-      ${notesHTML}
-    </div>
-    <!-- Divider -->
+    <div style="padding-right:28px">${notesHTML}</div>
     <div style="background:#ddd;height:100%;min-height:80px"></div>
-    <!-- Signature -->
     <div style="padding-left:28px;text-align:center">
       <div style="font-family:'Caveat',cursive;font-weight:700;font-size:42px;color:#1a1464;line-height:1.1">Aaditya Kumar</div>
       <div style="border-bottom:2px solid #4CAF50;margin:4px 20px 10px"></div>
@@ -534,13 +536,13 @@ function buildInvoiceHTML() {
     </div>
   </div>
 
-  <!-- ═══ FOOTER ═══ -->
+  <!-- FOOTER -->
   <div style="border-top:1.5px dashed #ddd;padding:14px 40px;text-align:center">
     <div style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:12.5px;color:#1a1464;margin-bottom:6px">Generated by We App Testers</div>
     <div style="display:flex;justify-content:center;align-items:center;gap:24px;font-size:12px;color:#555">
-      <span>🌐 www.weapptesters.com</span>
+      <span>&#127760; www.weapptesters.com</span>
       <span style="color:#ccc">|</span>
-      <span>📞 +91 9122061839</span>
+      <span>&#128222; +91 9122061839</span>
     </div>
   </div>
 
@@ -549,42 +551,79 @@ function buildInvoiceHTML() {
 </html>`;
 }
 
-/* ── PDF Download ───────────────────────────── */
+/* ── PDF Download — uses print dialog (fast, no corruption) ── */
 function downloadPDF() {
+  /* Validate first */
+  const errors = validateForm();
+  if (errors.length > 0) { showErrors(errors); return; }
+  clearErrors();
+
   const btn = document.getElementById('btn-download');
-  if (btn) { btn.textContent = '⏳ Generating PDF...'; btn.disabled = true; }
+  if (btn) { btn.textContent = '⏳ Opening PDF...'; btn.disabled = true; }
 
-  const clientName = (document.getElementById('inp-client-name')?.value||'Invoice').trim().replace(/\s+/g,'_');
-  const filename   = `WAT_${buildInvNum()}_${clientName}.pdf`;
+  const invoiceHTML = buildInvoiceHTML();
 
-  /* Create hidden iframe with invoice HTML */
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:794px;height:1123px;border:none;';
-  document.body.appendChild(iframe);
+  /* Open in new tab and trigger print — browser saves as PDF */
+  const printWin = window.open('', '_blank', 'width=900,height=700');
+  if (!printWin) {
+    alert('Pop-up blocked! Please allow pop-ups for this site and try again.');
+    if (btn) { btn.textContent = '⬇ Download Invoice PDF'; btn.disabled = false; }
+    return;
+  }
 
-  const iDoc = iframe.contentDocument || iframe.contentWindow.document;
-  iDoc.open(); iDoc.write(buildInvoiceHTML()); iDoc.close();
+  printWin.document.open();
+  printWin.document.write(invoiceHTML);
+  printWin.document.close();
 
-  /* Wait for fonts/images then capture */
+  /* Wait for fonts to load then print */
+  printWin.onload = function() {
+    setTimeout(() => {
+      printWin.focus();
+      printWin.print();
+      if (btn) { btn.textContent = '⬇ Download Invoice PDF'; btn.disabled = false; }
+    }, 800);
+  };
+
+  /* Fallback if onload doesn't fire */
   setTimeout(() => {
-    const el = iDoc.body;
-    const opt = {
-      margin: 0,
-      filename: filename,
-      image: { type:'jpeg', quality:0.98 },
-      html2canvas: { scale:2, useCORS:true, backgroundColor:'#ffffff', width:794, windowWidth:794 },
-      jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
-      pagebreak: { mode:'avoid-all' },
-    };
-    html2pdf().set(opt).from(iDoc.querySelector('.page')).save().then(() => {
-      document.body.removeChild(iframe);
-      if (btn) { btn.textContent = '⬇ Download PDF'; btn.disabled = false; }
-    }).catch(err => {
-      console.error(err);
-      document.body.removeChild(iframe);
-      if (btn) { btn.textContent = '⬇ Download PDF'; btn.disabled = false; }
-    });
-  }, 1200);
+    if (btn && btn.disabled) {
+      btn.textContent = '⬇ Download Invoice PDF';
+      btn.disabled = false;
+    }
+  }, 4000);
+}
+
+/* ── Reset form ─────────────────────────────── */
+function resetForm() {
+  if (!confirm('Reset all fields? This cannot be undone.')) return;
+  state = { currency:'₹', preset:null, agreedPrice:null, services:[], payments:[], useManual:false, manualReceived:'' };
+
+  document.getElementById('inp-client-name').value = '';
+  document.getElementById('inp-client-email').value = '';
+  document.getElementById('inp-client-phone').value = '';
+  document.getElementById('inp-date').value = todayISO();
+  document.getElementById('inp-inv-p1').value = 'WAT';
+  document.getElementById('inp-inv-p2').value = '';
+  document.getElementById('inp-inv-p3').value = new Date().getFullYear();
+  document.getElementById('inp-app-name').value = '';
+  document.getElementById('inp-pkg-name').value = '';
+  document.getElementById('inp-testers').value = '';
+  document.getElementById('inp-duration').value = '';
+  document.getElementById('inp-agreed-price').value = '';
+  document.getElementById('inp-notes').value = DEFAULT_NOTES;
+  document.getElementById('inp-manual-received').value = '';
+  document.getElementById('chk-manual').checked = false;
+  document.getElementById('manual-field').style.display = 'none';
+  document.getElementById('custom-price-wrap').style.display = 'none';
+
+  const prev = document.getElementById('inv-num-preview');
+  if (prev) prev.textContent = buildInvNum();
+
+  renderPresets();
+  renderServiceRows();
+  renderPaymentEntries();
+  clearErrors();
+  addService('14day');
 }
 
 /* ── Helpers ────────────────────────────────── */
@@ -612,12 +651,6 @@ document.addEventListener('DOMContentLoaded', () => {
   /* Notes prefill */
   const notesInp = document.getElementById('inp-notes');
   if (notesInp) notesInp.value = DEFAULT_NOTES;
-
-  /* Testers / Duration placeholders */
-  const testersInp = document.getElementById('inp-testers');
-  if (testersInp) testersInp.placeholder = '12+ Testers';
-  const durInp = document.getElementById('inp-duration');
-  if (durInp) durInp.placeholder = '14 Days';
 
   /* Service buttons */
   document.getElementById('btn-add-14day')?.addEventListener('click', () => addService('14day'));
@@ -656,6 +689,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* Download */
   document.getElementById('btn-download')?.addEventListener('click', downloadPDF);
+
+  /* Reset */
+  document.getElementById('btn-reset')?.addEventListener('click', resetForm);
 
   /* Default service */
   addService('14day');
