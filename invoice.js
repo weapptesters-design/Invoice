@@ -374,11 +374,7 @@ function buildInvoiceHTML(exportMode = 'html') {
   if (clientPhone) clientLines += `<div style="font-size:13px;color:#444">${escHtml(clientPhone)}</div>`;
 
   /* ── Header HTML ── */
-  let basePath = window.location.pathname;
-  if (!basePath.endsWith('/')) {
-    basePath = basePath.substring(0, basePath.lastIndexOf('/') + 1);
-  }
-  const logoSrc = window.location.origin + basePath + 'logo.png';
+  const logoSrc = window.location.origin + '/logo.png';
   const headerHTML = `
   <div style="padding:20px 45px 15px; display:flex; justify-content:space-between; align-items:flex-start;">
     <div style="display:flex; align-items:center; gap:20px;">
