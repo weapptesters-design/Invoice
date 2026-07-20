@@ -12,6 +12,27 @@ const PRESETS = [
 
 const DEFAULT_NOTES = 'Thank you for choosing We App Testers. Payment has been received successfully. This invoice serves as proof of payment.';
 
+// Preload logo as Base64 to prevent any cross-origin or path issues during PDF/Image generation
+window.LOGO_BASE64 = '';
+(async function preloadLogo() {
+  try {
+    let basePath = window.location.pathname;
+    if (!basePath.endsWith('/')) {
+      basePath = basePath.substring(0, basePath.lastIndexOf('/') + 1);
+    }
+    const logoUrl = window.location.origin + basePath + 'logo.png';
+    const response = await fetch(logoUrl);
+    const blob = await response.blob();
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      window.LOGO_BASE64 = reader.result;
+    };
+    reader.readAsDataURL(blob);
+  } catch (e) {
+    console.error('Failed to preload logo:', e);
+  }
+})();
+
 let state = {
   currency: '₹',
   rates: {},
