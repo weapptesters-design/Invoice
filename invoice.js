@@ -395,16 +395,11 @@ function buildInvoiceHTML(exportMode = 'html') {
   if (clientPhone) clientLines += `<div style="font-size:13px;color:#444">${escHtml(clientPhone)}</div>`;
 
   /* ── Header HTML ── */
-  let basePath = window.location.pathname;
-  if (!basePath.endsWith('/')) {
-    basePath = basePath.substring(0, basePath.lastIndexOf('/') + 1);
-  }
-  const fallbackLogo = window.location.origin + basePath + 'logo.png';
-  const logoSrc = window.LOGO_BASE64 || fallbackLogo;
+  const logoSrc = window.location.origin + '/logo.png';
   const headerHTML = `
   <div style="padding:20px 45px 15px; display:flex; justify-content:space-between; align-items:flex-start;">
     <div style="display:flex; align-items:center; gap:20px;">
-      <img src="${logoSrc}" style="width:75px; height:75px; object-fit:contain;" onerror="this.style.display='none'">
+      <img src="${logoSrc}" style="width:75px; height:75px; object-fit:contain;" crossorigin="anonymous" onerror="this.style.display='none'">
       <div>
         <div style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:26px; color:#1e0c82; letter-spacing:1px; line-height:1; margin-bottom:10px;">WE <span style="color:#8cc63f;">APP</span> TESTERS</div>
         <div style="font-family:'DM Sans',sans-serif; font-size:12.5px; color:#666; line-height:1.6;">

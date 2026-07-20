@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "site": "wat-invoice-generator",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
