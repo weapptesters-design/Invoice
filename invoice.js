@@ -649,7 +649,7 @@ function buildInvoiceHTML(exportMode = 'html') {
   }
   .page{
     width:210mm;
-    min-height:296.5mm; /* Slightly less than 297mm to prevent a blank second page */
+    min-height:297mm; /* Changed to 297mm to prevent bottom white gap */
     background:#fff;
     padding:0;
     display:flex;
@@ -659,8 +659,8 @@ function buildInvoiceHTML(exportMode = 'html') {
     overflow:hidden;
   }
   @media print {
-    html,body { width:210mm; height:296.5mm; margin:0; padding:0; overflow:hidden; }
-    .page { width:210mm; min-height:296.5mm; page-break-after:avoid; border:none; box-shadow:none; }
+    html,body { width:210mm; height:297mm; margin:0; padding:0; overflow:hidden; }
+    .page { width:210mm; min-height:297mm; page-break-after:avoid; border:none; box-shadow:none; }
     @page { size:A4; margin:0; }
   }
 </style>
@@ -696,7 +696,7 @@ function downloadPDF() {
   iframe.className = 'download-frame';
   iframe.style.position = 'absolute';
   iframe.style.width = '210mm';
-  iframe.style.height = '296.5mm';
+  iframe.style.height = '297mm';
   iframe.style.left = '-9999px';
   iframe.style.top = '0';
   document.body.appendChild(iframe);
