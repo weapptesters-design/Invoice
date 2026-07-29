@@ -4,15 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Payment Confirmation Generator · We App Testers</title>
-<meta name="theme-color" content="#0f1115">
+<meta name="theme-color" content="#f4f5f9" id="themeColorMeta">
+<script>
+// Applied before paint so there's no flash-of-wrong-theme. Light is default.
+(function(){
+  try{
+    var saved = localStorage.getItem('wat_theme');
+    if(saved === 'dark'){
+      document.documentElement.setAttribute('data-theme','dark');
+    }
+  }catch(e){}
+})();
+</script>
 <style>
 /* ==========================================================================
    TOKENS — We App Testers · Payment Confirmation Generator
    Dense, single-screen entry flow: fields ordered exactly as they read out
    loud, tight vertical rhythm, receipt-style live preview tucked behind a
    toggle so the form itself stays on one screen.
+   Light is the default theme (better legibility at low screen brightness);
+   dark is available via the toggle in the header.
    ========================================================================== */
 :root{
+  --bg:#f3f4f9;
+  --bg-grad:#eceef5;
+  --surface:#ffffff;
+  --surface-2:#f1f3f8;
+  --surface-3:#e6e9f2;
+  --border:#dcdfea;
+  --border-soft:#e7e9f2;
+  --text:#1a1d29;
+  --text-muted:#5b6175;
+  --text-faint:#868da2;
+  --accent:#059669;
+  --accent-strong:#047857;
+  --accent-dim:rgba(5,150,105,.12);
+  --accent-2:#b45309;
+  --danger:#dc2626;
+  --danger-dim:rgba(220,38,38,.10);
+  --radius-lg:18px;
+  --radius-md:13px;
+  --radius-sm:10px;
+  --shadow-card:0 1px 2px rgba(20,24,40,.05), 0 8px 20px -12px rgba(20,24,40,.18);
+  --font-display:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono','JetBrains Mono',Consolas,monospace;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+
+html[data-theme="dark"]{
   --bg:#0d0f14;
   --bg-grad:#11141b;
   --surface:#171b24;
@@ -29,21 +69,14 @@
   --accent-2:#fbbf24;
   --danger:#f87171;
   --danger-dim:rgba(248,113,113,.13);
-  --radius-lg:18px;
-  --radius-md:13px;
-  --radius-sm:10px;
   --shadow-card:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.55);
-  --font-display:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-  --font-mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono','JetBrains Mono',Consolas,monospace;
-  --safe-b:env(safe-area-inset-bottom,0px);
 }
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
 body{
   background:
-    radial-gradient(1200px 600px at 50% -10%, #16192280 0%, transparent 60%),
+    radial-gradient(1200px 600px at 50% -10%, var(--accent-dim) 0%, transparent 60%),
     linear-gradient(180deg,var(--bg-grad),var(--bg) 300px);
   color:var(--text);
   font-family:var(--font-body);
@@ -63,11 +96,12 @@ body{
 /* ---------- Header ---------- */
 .topbar{
   position:sticky;top:0;z-index:20;
-  background:rgba(13,15,20,.85);
+  background:rgba(255,255,255,.78);
   backdrop-filter:blur(14px) saturate(140%);
   -webkit-backdrop-filter:blur(14px) saturate(140%);
   border-bottom:1px solid var(--border-soft);
 }
+html[data-theme="dark"] .topbar{background:rgba(13,15,20,.85);}
 .topbar-inner{
   max-width:520px;margin:0 auto;padding:10px 14px;
   display:flex;align-items:center;gap:10px;
@@ -82,12 +116,20 @@ body{
 .brand-text{line-height:1.1;}
 .brand-text .title{font-family:var(--font-display);font-weight:700;font-size:14.5px;letter-spacing:-.01em;}
 .brand-text .subtitle{font-size:11px;color:var(--text-muted);margin-top:0;}
-.status-dot{
-  margin-left:auto;display:flex;align-items:center;gap:6px;
-  font-size:10.5px;color:var(--text-faint);font-family:var(--font-mono);
-  padding:4px 9px;border:1px solid var(--border);border-radius:999px;background:var(--surface);
+.theme-toggle{
+  margin-left:auto;flex:0 0 auto;
+  width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text-muted);cursor:pointer;
+  transition:background .15s ease,color .15s ease,border-color .15s ease,transform .1s ease;
+  -webkit-tap-highlight-color:transparent;
 }
-.status-dot i{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);animation:pulse 2.4s ease-in-out infinite;}
+.theme-toggle:active{transform:scale(.92);}
+.theme-toggle svg{width:17px;height:17px;}
+.theme-toggle .icon-moon{display:none;}
+html[data-theme="dark"] .theme-toggle .icon-sun{display:none;}
+html[data-theme="dark"] .theme-toggle .icon-moon{display:block;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
 
 /* ---------- Form card: everything lives here, tightly packed ---------- */
@@ -137,7 +179,8 @@ body{
 }
 .input.has-error{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-dim);}
 .input{color:var(--text) !important;-webkit-text-fill-color:var(--text);}
-.input[type=date]{color-scheme:dark;}
+.input[type=date]{color-scheme:light;}
+html[data-theme="dark"] .input[type=date]{color-scheme:dark;}
 /* Some Android/iOS WebViews render the native date digits black regardless
    of color-scheme — force them white explicitly. */
 .input[type=date]::-webkit-datetime-edit,
@@ -149,7 +192,8 @@ body{
   color:var(--text) !important;
   -webkit-text-fill-color:var(--text);
 }
-.input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.6);}
+.input[type=date]::-webkit-calendar-picker-indicator{opacity:.65;}
+html[data-theme="dark"] .input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.6);opacity:1;}
 .input.compact{max-width:96px;text-align:center;font-variant-numeric:tabular-nums;}
 .prefix-input{position:relative;}
 .prefix-input .prefix{
@@ -252,6 +296,9 @@ body{
 .actionbar{
   position:fixed;left:0;right:0;bottom:0;z-index:30;
   padding:10px 14px calc(10px + var(--safe-b));
+  background:linear-gradient(180deg, rgba(243,244,249,0) 0%, rgba(243,244,249,.94) 24%, rgba(243,244,249,.98) 100%);
+}
+html[data-theme="dark"] .actionbar{
   background:linear-gradient(180deg, rgba(13,15,20,0) 0%, rgba(13,15,20,.94) 24%, rgba(13,15,20,.98) 100%);
 }
 .actionbar-inner{max-width:520px;margin:0 auto;display:flex;gap:9px;}
@@ -305,7 +352,10 @@ body{
       <div class="title">We App Testers</div>
       <div class="subtitle">Payment Confirmation Generator</div>
     </div>
-    <div class="status-dot"><i></i>DRAFT</div>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+    </button>
   </div>
 </header>
 
@@ -479,6 +529,7 @@ body{
     previewBody: document.getElementById('previewBody'),
     generateBtn: document.getElementById('generateBtn'),
     resetBtn: document.getElementById('resetBtn'),
+    themeToggle: document.getElementById('themeToggle'),
     toast: document.getElementById('toast'),
     toastMsg: document.getElementById('toastMsg')
   };
@@ -841,6 +892,19 @@ body{
     el.previewToggle.lastChild.textContent = open ? ' Hide live preview' : ' Show live preview';
   }
 
+  var THEME_KEY = 'wat_theme';
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+    var meta = document.getElementById('themeColorMeta');
+    if(meta) meta.setAttribute('content', theme === 'dark' ? '#0d0f14' : '#f4f5f9');
+  }
+  function toggleTheme(){
+    var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try{ localStorage.setItem(THEME_KEY, next); }catch(e){}
+  }
+
   /* ---------------------------------------------------------------------
      Wire up events
      --------------------------------------------------------------------- */
@@ -855,10 +919,14 @@ body{
   el.generateBtn.addEventListener('click', handleGenerate);
   el.resetBtn.addEventListener('click', handleReset);
   el.previewToggle.addEventListener('click', togglePreview);
+  el.themeToggle.addEventListener('click', toggleTheme);
 
   /* ---------------------------------------------------------------------
      Init
      --------------------------------------------------------------------- */
+  // Sync the theme-color meta / attribute with whatever the head script
+  // already applied (or the light default if nothing was saved).
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
   restore();
   renderAll();
 })();
