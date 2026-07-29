@@ -362,7 +362,6 @@ html[data-theme="dark"] .actionbar{
 <main class="wrap">
   <div class="form-card">
 
-    <!-- 1. Payment Number -->
     <div class="frow payno-row">
       <div class="frow-label">No.</div>
       <div class="frow-body">
@@ -370,7 +369,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- 2. Payment percentage -->
     <div class="frow">
       <div class="frow-label">Percent</div>
       <div class="frow-body">
@@ -382,7 +380,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- 3. Currency -->
     <div class="frow">
       <div class="frow-label">Currency</div>
       <div class="frow-body">
@@ -393,7 +390,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- 4. Amount -->
     <div class="frow">
       <div class="frow-label">Amount</div>
       <div class="frow-body">
@@ -404,7 +400,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- 5. Payment method (dynamic) -->
     <div class="frow" id="methodRow">
       <div class="frow-label">Method</div>
       <div class="frow-body">
@@ -420,7 +415,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- 6. App Code + App Name -->
     <div class="frow">
       <div class="frow-label">App</div>
       <div class="frow-body">
@@ -431,7 +425,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- 7. Play Store Link -->
     <div class="frow">
       <div class="frow-label">Link</div>
       <div class="frow-body">
@@ -439,7 +432,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- Transaction ID (optional, out of the quick-flow order on purpose) -->
     <div class="frow">
       <div class="frow-label">Txn ID <span class="opt">optional</span></div>
       <div class="frow-body">
@@ -447,7 +439,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- 8. Start Date — defaults to today (IST), editable -->
     <div class="frow">
       <div class="frow-label">Start <span class="opt">(IST)</span></div>
       <div class="frow-body">
@@ -455,7 +446,6 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- Computed: Apply4production -->
     <div class="frow">
       <div class="frow-label">+14 days</div>
       <div class="frow-body computed-row">
@@ -463,13 +453,11 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
-    <!-- Auto Order ID -->
     <div class="order-strip">
       <span class="k">Order ID</span>
       <span class="v empty" id="orderIdValue">BX026Q···</span>
     </div>
 
-    <!-- Preview toggle -->
     <button class="preview-toggle" id="previewToggle" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
       Show live preview
@@ -571,6 +559,17 @@ html[data-theme="dark"] .actionbar{
     if(cur === 'INR') return '₹';
     if(cur === 'USD') return '$';
     return '';
+  }
+
+  // Set default Start Date to Today in IST format (YYYY-MM-DD)
+  function setDefaultTodayIST(){
+    var now = new Date();
+    var istOffset = 5.5 * 60 * 60 * 1000;
+    var istDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + istOffset);
+    var yyyy = istDate.getFullYear();
+    var mm = String(istDate.getMonth() + 1).padStart(2, '0');
+    var dd = String(istDate.getDate()).padStart(2, '0');
+    el.startDate.value = yyyy + '-' + mm + '-' + dd;
   }
 
   /* ---------------------------------------------------------------------
@@ -869,6 +868,7 @@ html[data-theme="dark"] .actionbar{
     el.appName.value = '';
     el.playLink.value = '';
     el.paymentNumber.value = '01';
+    setDefaultTodayIST();
     try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
     renderAll();
     showToast('Form reset', false);
@@ -919,6 +919,7 @@ html[data-theme="dark"] .actionbar{
   // already applied (or the light default if nothing was saved).
   applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
   restore();
+  setDefaultTodayIST();
   renderAll();
 })();
 </script>
