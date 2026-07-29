@@ -136,7 +136,20 @@ body{
   box-shadow:0 0 0 3px var(--accent-dim);outline:none;
 }
 .input.has-error{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-dim);}
+.input{color:var(--text) !important;-webkit-text-fill-color:var(--text);}
 .input[type=date]{color-scheme:dark;}
+/* Some Android/iOS WebViews render the native date digits black regardless
+   of color-scheme — force them white explicitly. */
+.input[type=date]::-webkit-datetime-edit,
+.input[type=date]::-webkit-datetime-edit-fields-wrapper,
+.input[type=date]::-webkit-datetime-edit-text,
+.input[type=date]::-webkit-datetime-edit-day-field,
+.input[type=date]::-webkit-datetime-edit-month-field,
+.input[type=date]::-webkit-datetime-edit-year-field{
+  color:var(--text) !important;
+  -webkit-text-fill-color:var(--text);
+}
+.input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.6);}
 .input.compact{max-width:96px;text-align:center;font-variant-numeric:tabular-nums;}
 .prefix-input{position:relative;}
 .prefix-input .prefix{
@@ -576,58 +589,55 @@ body{
     var sym = currencySymbol(state.currency);
     var amountLine = sym + (state.amount || ph) + ' ' + (state.currency || ph) + ' in ' + (state.method || ph);
 
-    // Each entry is a "block" — blocks are separated by a single blank line.
-    // Lines *within* a block have no blank line between them. No « » symbols,
-    // no smart quotes, no extra indentation — highlighted lines use "> " only.
-    var blocks = [];
+    // Exact line-by-line spacing per spec — no « » symbols, no smart quotes,
+    // no extra indentation, highlighted lines use "> " only. Blank lines are
+    // only where explicitly shown below; several sections near the end run
+    // back-to-back with no blank line between them.
+    var lines = [];
 
-    var paymentBlock = [numberLabel + '. 💰' + statusLabel + '% Payment Received ✅ ' + amountLine];
+    lines.push(numberLabel + '. 💰' + statusLabel + '% Payment Received ✅ ' + amountLine);
     if(state.transactionId){
-      paymentBlock.push('Transaction id : ' + state.transactionId);
+      lines.push('Transaction id : ' + state.transactionId);
     }
-    blocks.push(paymentBlock);
-
     if(state.status === '0'){
-      blocks.push(['> Remaining payment before testing starts']);
+      lines.push('');
+      lines.push('> Remaining payment before testing starts');
     } else if(state.status === '50'){
-      blocks.push(['> Remaining payment after Production Access approval']);
+      lines.push('');
+      lines.push('> Remaining payment after Production Access approval');
     }
+    lines.push('');
+    lines.push('> ' + (state.appCode || ph) + ' ' + (state.appName || ph));
+    lines.push('Link 🔗');
+    lines.push(state.playLink || ph);
+    lines.push('');
+    lines.push('Start : ' + (dates.start ? formatDate(dates.start) : ph) + ' (IST)');
+    lines.push('Apply4production : ' + (dates.apply ? formatDate(dates.apply) : ph));
+    lines.push('');
+    lines.push('Order Id: ' + (orderId || ph));
+    lines.push('╔══════════════╗');
+    lines.push('🚀 Production Questions Answer');
+    lines.push('Will be shared.');
+    lines.push('');
+    lines.push('🌟 Private Feedback/Review');
+    lines.push('Will be done in Play Store before 14 days completion.');
+    lines.push('');
+    lines.push('📌 Confirmation');
+    lines.push('This is the official confirmation text from my side for easy management., No need to reply.');
+    lines.push('╚══════════════╝');
+    lines.push('> Add our contact number');
+    lines.push('+919122061839');
+    lines.push('> for future use');
+    lines.push('-----------------------------------');
+    lines.push('🔹 *Tracking Page:*');
+    lines.push('https://weapptesters.com/client_tracking');
+    lines.push('Please note:');
+    lines.push('Data on this page may have a delay of up to 24 hours due to update processing.');
+    lines.push('');
+    lines.push('🧾 *Want an Invoice/Receipt?*');
+    lines.push("Let us know, and we'll send it to you.");
 
-    blocks.push([
-      '> ' + (state.appCode || ph) + ' ' + (state.appName || ph),
-      'Link 🔗',
-      state.playLink || ph
-    ]);
-
-    blocks.push([
-      'Start : ' + (dates.start ? formatDate(dates.start) : ph) + ' (IST)',
-      'Apply4production : ' + (dates.apply ? formatDate(dates.apply) : ph)
-    ]);
-
-    blocks.push(['Order Id: ' + (orderId || ph)]);
-
-    blocks.push([
-      '╔══════════════╗',
-      '🚀 Production Questions Answer',
-      'Will be shared.',
-      '',
-      '🌟 Private Feedback/Review',
-      'Will be done in Play Store before 14 days completion.',
-      '',
-      '📌 Confirmation',
-      'This is the official confirmation text from my side for easy management., No need to reply.',
-      '╚══════════════╝'
-    ]);
-
-    blocks.push(['> Add our contact number', '+919122061839']);
-    blocks.push(['> for future use']);
-    blocks.push(['-----------------------------------']);
-    blocks.push(['🔹 Tracking Page:', 'https://weapptesters.com/client_tracking']);
-    blocks.push(['Please note:', 'Data on this page may have a delay of up to 24 hours due to update processing.']);
-    blocks.push(['🧾 Want an Invoice/Receipt?']);
-    blocks.push(["Let us know, and we'll send it to you."]);
-
-    return blocks.map(function(b){ return b.join('\n'); }).join('\n\n');
+    return lines.join('\n');
   }
 
   /* ---------------------------------------------------------------------
@@ -780,7 +790,6 @@ body{
 
     copyToClipboard(text).then(function(){
       showToast('Copied Successfully ✅', false);
-      el.paymentNumber.value = incrementPaymentNumber(state.paymentNumber || '01');
       el.transactionId.value = '';
       el.startDate.value = todayIST();
       renderAll();
