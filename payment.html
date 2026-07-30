@@ -172,7 +172,7 @@ html[data-theme="dark"] .theme-toggle .icon-moon{display:block;}
   transition:border-color .15s ease, background .15s ease, box-shadow .15s ease;
   appearance:none;-webkit-appearance:none;
 }
-.input::placeholder{color:var(--text-faint);}
+.input::placeholder{color:var(--text-faint);opacity:.45;}
 .input:focus{
   border-color:var(--accent);background:var(--surface-3);
   box-shadow:0 0 0 3px var(--accent-dim);outline:none;
@@ -362,13 +362,15 @@ html[data-theme="dark"] .actionbar{
 <main class="wrap">
   <div class="form-card">
 
+    <!-- 1. Payment Number -->
     <div class="frow payno-row">
       <div class="frow-label">No.</div>
       <div class="frow-body">
-        <input class="input compact" id="paymentNumber" type="text" inputmode="numeric" value="01" maxlength="6">
+        <input class="input compact" id="paymentNumber" type="text" inputmode="numeric" value="01" maxlength="6" enterkeyhint="next">
       </div>
     </div>
 
+    <!-- 2. Payment percentage -->
     <div class="frow">
       <div class="frow-label">Percent</div>
       <div class="frow-body">
@@ -380,6 +382,7 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
+    <!-- 3. Currency -->
     <div class="frow">
       <div class="frow-label">Currency</div>
       <div class="frow-body">
@@ -390,16 +393,18 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
+    <!-- 4. Amount -->
     <div class="frow">
       <div class="frow-label">Amount</div>
       <div class="frow-body">
         <div class="prefix-input">
           <span class="prefix" id="amountPrefix">₹</span>
-          <input class="input" id="amount" type="number" inputmode="decimal" min="0" step="0.01">
+          <input class="input" id="amount" type="number" inputmode="decimal" min="0" step="0.01" enterkeyhint="next">
         </div>
       </div>
     </div>
 
+    <!-- 5. Payment method (dynamic) -->
     <div class="frow" id="methodRow">
       <div class="frow-label">Method</div>
       <div class="frow-body">
@@ -415,30 +420,34 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
+    <!-- 6. App Code + App Name -->
     <div class="frow">
       <div class="frow-label">App</div>
       <div class="frow-body">
         <div class="two-col">
-          <input class="input" id="appCode" type="text" autocomplete="off" autocapitalize="characters" maxlength="12">
-          <input class="input" id="appName" type="text" autocomplete="off">
+          <input class="input" id="appCode" type="text" placeholder="Code" autocomplete="off" autocapitalize="characters" maxlength="12" enterkeyhint="next">
+          <input class="input" id="appName" type="text" placeholder="Name" autocomplete="off" autocapitalize="words" enterkeyhint="next">
         </div>
       </div>
     </div>
 
+    <!-- 7. Play Store Link -->
     <div class="frow">
       <div class="frow-label">Link</div>
       <div class="frow-body">
-        <input class="input" id="playLink" type="url" autocomplete="off" autocapitalize="off">
+        <input class="input" id="playLink" type="url" autocomplete="off" autocapitalize="off" enterkeyhint="next">
       </div>
     </div>
 
+    <!-- Transaction ID (optional, out of the quick-flow order on purpose) -->
     <div class="frow">
       <div class="frow-label">Txn ID <span class="opt">optional</span></div>
       <div class="frow-body">
-        <input class="input" id="transactionId" type="text" autocomplete="off" autocapitalize="characters">
+        <input class="input" id="transactionId" type="text" autocomplete="off" autocapitalize="characters" enterkeyhint="done">
       </div>
     </div>
 
+    <!-- 8. Start Date — defaults to today (IST), editable -->
     <div class="frow">
       <div class="frow-label">Start <span class="opt">(IST)</span></div>
       <div class="frow-body">
@@ -446,6 +455,7 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
+    <!-- Computed: Apply4production -->
     <div class="frow">
       <div class="frow-label">+14 days</div>
       <div class="frow-body computed-row">
@@ -453,11 +463,13 @@ html[data-theme="dark"] .actionbar{
       </div>
     </div>
 
+    <!-- Auto Order ID -->
     <div class="order-strip">
       <span class="k">Order ID</span>
       <span class="v empty" id="orderIdValue">BX026Q···</span>
     </div>
 
+    <!-- Preview toggle -->
     <button class="preview-toggle" id="previewToggle" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
       Show live preview
@@ -549,6 +561,10 @@ html[data-theme="dark"] .actionbar{
     d.setDate(d.getDate() + days);
     return d;
   }
+  function todayIST(){
+    // returns YYYY-MM-DD for the current date in India Standard Time
+    return new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Kolkata' }).format(new Date());
+  }
   function suffixForStatus(status){
     if(status === '0') return 'X';
     if(status === '50') return 'Y';
@@ -559,17 +575,6 @@ html[data-theme="dark"] .actionbar{
     if(cur === 'INR') return '₹';
     if(cur === 'USD') return '$';
     return '';
-  }
-
-  // Set default Start Date to Today in IST format (YYYY-MM-DD)
-  function setDefaultTodayIST(){
-    var now = new Date();
-    var istOffset = 5.5 * 60 * 60 * 1000;
-    var istDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + istOffset);
-    var yyyy = istDate.getFullYear();
-    var mm = String(istDate.getMonth() + 1).padStart(2, '0');
-    var dd = String(istDate.getDate()).padStart(2, '0');
-    el.startDate.value = yyyy + '-' + mm + '-' + dd;
   }
 
   /* ---------------------------------------------------------------------
@@ -646,10 +651,8 @@ html[data-theme="dark"] .actionbar{
       lines.push('Transaction id : ' + state.transactionId);
     }
     if(state.status === '0'){
-      lines.push('');
       lines.push('> Remaining payment before testing starts');
     } else if(state.status === '50'){
-      lines.push('');
       lines.push('> Remaining payment after Production Access approval');
     }
     lines.push('');
@@ -679,7 +682,7 @@ html[data-theme="dark"] .actionbar{
     lines.push('https://weapptesters.com/client_tracking');
     lines.push('Please note:');
     lines.push('Data on this page may have a delay of up to 24 hours due to update processing.');
-    lines.push('-----------------------------------');
+    lines.push('');
     lines.push('🧾 *Want an Invoice/Receipt?*');
     lines.push("Let us know, and we'll send it to you.");
 
@@ -768,6 +771,7 @@ html[data-theme="dark"] .actionbar{
         setRadioValue('method', data.method);
       }
     }
+    el.startDate.value = todayIST();
   }
 
   /* ---------------------------------------------------------------------
@@ -834,6 +838,7 @@ html[data-theme="dark"] .actionbar{
     copyToClipboard(text).then(function(){
       showToast('Copied Successfully ✅', false);
       el.transactionId.value = '';
+      el.startDate.value = todayIST();
       renderAll();
     }).catch(function(){
       showToast('Could not copy — select the preview text manually', true);
@@ -868,7 +873,7 @@ html[data-theme="dark"] .actionbar{
     el.appName.value = '';
     el.playLink.value = '';
     el.paymentNumber.value = '01';
-    setDefaultTodayIST();
+    el.startDate.value = todayIST();
     try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
     renderAll();
     showToast('Form reset', false);
@@ -897,6 +902,41 @@ html[data-theme="dark"] .actionbar{
   }
 
   /* ---------------------------------------------------------------------
+     App Name — capitalize the first letter of every word as you type,
+     regardless of what the device keyboard does with autocapitalize.
+     --------------------------------------------------------------------- */
+  function titleCase(str){
+    return str.replace(/(^|\s)([a-z])/g, function(m, sep, ch){ return sep + ch.toUpperCase(); });
+  }
+  el.appName.addEventListener('input', function(){
+    var pos = el.appName.selectionStart;
+    var fixed = titleCase(el.appName.value);
+    if(fixed !== el.appName.value){
+      el.appName.value = fixed;
+      el.appName.setSelectionRange(pos, pos);
+    }
+  });
+
+  /* ---------------------------------------------------------------------
+     Enter key moves to the next field (mobile keyboard "next" behaviour)
+     instead of doing nothing. Last field in the chain closes the keyboard.
+     --------------------------------------------------------------------- */
+  var enterChain = [el.paymentNumber, el.amount, el.appCode, el.appName, el.playLink, el.transactionId];
+  enterChain.forEach(function(node, i){
+    node.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      var next = enterChain[i + 1];
+      if(next){
+        next.focus();
+        if(typeof next.select === 'function' && next.type !== 'date') next.select();
+      } else {
+        node.blur();
+      }
+    });
+  });
+
+  /* ---------------------------------------------------------------------
      Wire up events
      --------------------------------------------------------------------- */
   var watched = [el.paymentNumber, el.amount, el.transactionId, el.appCode, el.appName, el.playLink, el.startDate];
@@ -919,7 +959,6 @@ html[data-theme="dark"] .actionbar{
   // already applied (or the light default if nothing was saved).
   applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
   restore();
-  setDefaultTodayIST();
   renderAll();
 })();
 </script>
