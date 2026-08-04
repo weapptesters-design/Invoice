@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phone Number Formatter</title>
+<style>
+  /* ---------- Design tokens ---------- */
+  :root{
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --text:#1a1d23;
+    --muted:#6b7280;
+    --border:#e3e6ec;
+    --accent:#2563eb;
+    --accent-hover:#1d4ed8;
+    --accent-soft:#eaf0ff;
+    --success:#16a34a;
+    --radius:14px;
+    --shadow:0 4px 20px rgba(15,23,42,0.06);
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  [data-theme="dark"]{
+    --bg:#0f1115;
+    --card:#171a21;
+    --text:#eef1f6;
+    --muted:#9aa2b1;
+    --border:#2a2e37;
+    --accent:#5b8dff;
+    --accent-hover:#7ba0ff;
+    --accent-soft:#1c2536;
+    --success:#4ade80;
+    --shadow:0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:24px 16px 60px;
+    transition:background .25s ease, color .25s ease;
+  }
+
+  .wrap{
+    width:100%;
+    max-width:520px;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+  }
+  header h1{
+    font-size:1.15rem;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:2px 0 0;
+    font-size:.8rem;
+    color:var(--muted);
+  }
+
+  .theme-btn{
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--text);
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.05rem;
+    transition:transform .15s ease, background .2s ease;
+    flex-shrink:0;
+  }
+  .theme-btn:active{transform:scale(0.9);}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px;
+    margin-bottom:16px;
+    transition:background .25s ease, border-color .25s ease;
+  }
+
+  label{
+    display:block;
+    font-size:.78rem;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:8px;
+  }
+
+  textarea{
+    width:100%;
+    min-height:100px;
+    resize:vertical;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    padding:14px;
+    font-size:1.05rem;
+    font-family:var(--mono);
+    background:transparent;
+    color:var(--text);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  textarea:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+
+  .output-box{
+    width:100%;
+    min-height:56px;
+    border-radius:10px;
+    border:1.5px dashed var(--border);
+    padding:14px;
+    font-family:var(--mono);
+    font-size:1.15rem;
+    font-weight:600;
+    word-break:break-all;
+    color:var(--accent);
+    background:var(--accent-soft);
+    display:flex;
+    align-items:center;
+    transition:background .2s ease, border-color .2s ease;
+  }
+  .output-box.empty{
+    color:var(--muted);
+    font-weight:400;
+    font-size:.95rem;
+    background:transparent;
+    border-style:dashed;
+  }
+
+  .country-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:10px;
+    font-size:.9rem;
+    color:var(--muted);
+  }
+  .country-row strong{
+    color:var(--text);
+  }
+
+  .btn-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+  }
+  .btn{
+    border:none;
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:.92rem;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    transition:transform .12s ease, background .15s ease, opacity .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn:active{transform:scale(0.96);}
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+  }
+  .btn-primary:hover{background:var(--accent-hover);}
+  .btn-secondary{
+    background:var(--accent-soft);
+    color:var(--accent);
+  }
+  .btn-secondary:hover{opacity:.85;}
+  .btn-ghost{
+    background:transparent;
+    color:var(--muted);
+    border:1.5px solid var(--border);
+  }
+  .btn-ghost:hover{color:var(--text);border-color:var(--muted);}
+  .btn:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--success);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:.85rem;
+    font-weight:600;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+    box-shadow:0 6px 20px rgba(0,0,0,0.2);
+    z-index:100;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  .hint{
+    font-size:.75rem;
+    color:var(--muted);
+    text-align:center;
+    margin-top:18px;
+    line-height:1.5;
+  }
+  kbd{
+    background:var(--accent-soft);
+    color:var(--accent);
+    border-radius:4px;
+    padding:1px 6px;
+    font-family:var(--mono);
+    font-size:.72rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Phone Formatter</h1>
+      <p>Clean WhatsApp numbers instantly</p>
+    </div>
+    <button class="theme-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+  </header>
+
+  <!-- Input card -->
+  <div class="card">
+    <label for="input">Paste or type a number</label>
+    <textarea id="input" placeholder="+55 21 98165-2939" autofocus autocomplete="off" spellcheck="false"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="pasteBtn">📋 Paste</button>
+      <button class="btn btn-ghost" id="clearBtn">✕ Clear</button>
+    </div>
+  </div>
+
+  <!-- Output card -->
+  <div class="card">
+    <label for="output">Cleaned result</label>
+    <div class="output-box empty" id="output">Result will appear here…</div>
+
+    <div class="country-row">
+      <span>Country: <strong id="country">Unknown</strong></span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="copyNumberBtn" disabled>✅ Copy Number</button>
+      <button class="btn btn-secondary" id="copyCountryBtn" disabled>🌍 Copy Country</button>
+    </div>
+  </div>
+
+  <p class="hint">Press <kbd>Enter</kbd> in the input to copy the cleaned number instantly.</p>
+</div>
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+/* =====================================================================
+   Phone Number Formatter — vanilla JS, no dependencies, works offline.
+   ===================================================================== */
+
+/* ---------- 1. Country calling-code table ----------
+   Sorted by code length (longest first) so we always match the most
+   specific prefix first (e.g. +1 vs +1242 for Bahamas). */
+const COUNTRY_CODES = [
+  // 4-digit / longer codes (rare, but checked first)
+  ["1876","Jamaica"], ["1869","Saint Kitts and Nevis"], ["1868","Trinidad and Tobago"],
+  ["1849","Dominican Republic"], ["1829","Dominican Republic"], ["1809","Dominican Republic"],
+  ["1787","Puerto Rico"], ["1784","Saint Vincent and the Grenadines"], ["1767","Dominica"],
+  ["1758","Saint Lucia"], ["1721","Sint Maarten"], ["1684","American Samoa"],
+  ["1671","Guam"], ["1670","Northern Mariana Islands"], ["1664","Montserrat"],
+  ["1649","Turks and Caicos"], ["1473","Grenada"], ["1441","Bermuda"],
+  ["1345","Cayman Islands"], ["1340","U.S. Virgin Islands"], ["1284","British Virgin Islands"],
+  ["1268","Antigua and Barbuda"], ["1264","Anguilla"], ["1246","Barbados"],
+  ["1242","Bahamas"],
+  // 3-digit codes
+  ["995","Georgia"], ["994","Azerbaijan"], ["993","Turkmenistan"], ["992","Tajikistan"],
+  ["977","Nepal"], ["976","Mongolia"], ["975","Bhutan"], ["974","Qatar"],
+  ["973","Bahrain"], ["972","Israel"], ["971","United Arab Emirates"], ["970","Palestine"],
+  ["968","Oman"], ["967","Yemen"], ["966","Saudi Arabia"], ["965","Kuwait"],
+  ["964","Iraq"], ["963","Syria"], ["962","Jordan"], ["961","Lebanon"], ["960","Maldives"],
+  ["886","Taiwan"], ["880","Bangladesh"], ["856","Laos"], ["855","Cambodia"],
+  ["853","Macau"], ["852","Hong Kong"], ["850","North Korea"],
+  ["692","Marshall Islands"], ["691","Micronesia"], ["690","Tokelau"], ["689","French Polynesia"],
+  ["688","Tuvalu"], ["687","New Caledonia"], ["686","Kiribati"], ["685","Samoa"],
+  ["684","American Samoa"], ["683","Niue"], ["682","Cook Islands"], ["681","Wallis and Futuna"],
+  ["680","Palau"], ["679","Fiji"], ["678","Vanuatu"], ["677","Solomon Islands"],
+  ["676","Tonga"], ["675","Papua New Guinea"], ["674","Nauru"], ["673","Brunei"],
+  ["672","Norfolk Island"], ["670","Timor-Leste"],
+  ["599","Curaçao"], ["598","Uruguay"], ["597","Suriname"], ["596","Martinique"],
+  ["595","Paraguay"], ["594","French Guiana"], ["593","Ecuador"], ["592","Guyana"],
+  ["591","Bolivia"], ["590","Guadeloupe"], ["509","Haiti"], ["508","Saint Pierre and Miquelon"],
+  ["507","Panama"], ["506","Costa Rica"], ["505","Nicaragua"], ["504","Honduras"],
+  ["503","El Salvador"], ["502","Guatemala"], ["501","Belize"], ["500","Falkland Islands"],
+  ["423","Liechtenstein"], ["421","Slovakia"], ["420","Czech Republic"],
+  ["389","North Macedonia"], ["387","Bosnia and Herzegovina"], ["386","Slovenia"],
+  ["385","Croatia"], ["382","Montenegro"], ["381","Serbia"], ["380","Ukraine"],
+  ["378","San Marino"], ["377","Monaco"], ["376","Andorra"], ["375","Belarus"],
+  ["374","Armenia"], ["373","Moldova"], ["372","Estonia"], ["371","Latvia"], ["370","Lithuania"],
+  ["359","Bulgaria"], ["358","Finland"], ["357","Cyprus"], ["356","Malta"],
+  ["355","Albania"], ["354","Iceland"], ["353","Ireland"], ["352","Luxembourg"], ["351","Portugal"],
+  ["298","Faroe Islands"], ["297","Aruba"], ["291","Eritrea"], ["290","Saint Helena"],
+  ["269","Comoros"], ["268","Eswatini"], ["267","Botswana"], ["266","Lesotho"],
+  ["265","Malawi"], ["264","Namibia"], ["263","Zimbabwe"], ["262","Réunion/Mayotte"],
+  ["261","Madagascar"], ["260","Zambia"], ["258","Mozambique"], ["257","Burundi"],
+  ["256","Uganda"], ["255","Tanzania"], ["254","Kenya"], ["253","Djibouti"],
+  ["252","Somalia"], ["251","Ethiopia"], ["250","Rwanda"], ["249","Sudan"],
+  ["248","Seychelles"], ["247","Ascension Island"], ["246","Diego Garcia"], ["245","Guinea-Bissau"],
+  ["244","Angola"], ["243","DR Congo"], ["242","Republic of the Congo"], ["241","Gabon"],
+  ["240","Equatorial Guinea"], ["239","São Tomé and Príncipe"], ["238","Cabo Verde"],
+  ["237","Cameroon"], ["236","Central African Republic"], ["235","Chad"], ["234","Nigeria"],
+  ["233","Ghana"], ["232","Sierra Leone"], ["231","Liberia"], ["230","Mauritius"],
+  ["229","Benin"], ["228","Togo"], ["227","Niger"], ["226","Burkina Faso"],
+  ["225","Ivory Coast"], ["224","Guinea"], ["223","Mali"], ["222","Mauritania"],
+  ["221","Senegal"], ["220","Gambia"], ["218","Libya"], ["216","Tunisia"],
+  ["213","Algeria"], ["212","Morocco"], ["211","South Sudan"],
+  // 2-digit codes
+  ["98","Iran"], ["95","Myanmar"], ["94","Sri Lanka"], ["93","Afghanistan"],
+  ["92","Pakistan"], ["91","India"], ["90","Turkey"], ["86","China"], ["84","Vietnam"],
+  ["82","South Korea"], ["81","Japan"], ["66","Thailand"], ["65","Singapore"],
+  ["64","New Zealand"], ["63","Philippines"], ["62","Indonesia"], ["61","Australia"],
+  ["60","Malaysia"], ["58","Venezuela"], ["57","Colombia"], ["56","Chile"],
+  ["55","Brazil"], ["54","Argentina"], ["53","Cuba"], ["52","Mexico"], ["51","Peru"],
+  ["49","Germany"], ["48","Poland"], ["47","Norway"], ["46","Sweden"], ["45","Denmark"],
+  ["44","United Kingdom"], ["43","Austria"], ["41","Switzerland"], ["40","Romania"],
+  ["39","Italy"], ["36","Hungary"], ["34","Spain"], ["33","France"], ["32","Belgium"],
+  ["31","Netherlands"], ["30","Greece"], ["27","South Africa"], ["20","Egypt"],
+  // 1-digit codes (checked last — least specific)
+  ["7","Russia/Kazakhstan"], ["1","United States/Canada"]
+];
+
+// Pre-sort by code length descending, just in case the list above is edited.
+COUNTRY_CODES.sort((a,b)=> b[0].length - a[0].length);
+
+/* ---------- 2. Core cleaning logic ---------- */
+function cleanNumber(raw){
+  if(!raw) return "";
+  // Keep a leading "+" only if present, strip everything except digits otherwise.
+  const hasPlus = raw.trim().startsWith("+");
+  const digitsOnly = raw.replace(/\D/g, ""); // remove all non-digit chars
+  return (hasPlus ? "+" : "") + digitsOnly;
+}
+
+function detectCountry(cleaned){
+  if(!cleaned.startsWith("+")) return "Unknown";
+  const digits = cleaned.slice(1);
+  for(const [code, name] of COUNTRY_CODES){
+    if(digits.startsWith(code)) return name;
+  }
+  return "Unknown";
+}
+
+/* ---------- 3. DOM references ---------- */
+const inputEl        = document.getElementById("input");
+const outputEl        = document.getElementById("output");
+const countryEl       = document.getElementById("country");
+const pasteBtn        = document.getElementById("pasteBtn");
+const clearBtn        = document.getElementById("clearBtn");
+const copyNumberBtn   = document.getElementById("copyNumberBtn");
+const copyCountryBtn  = document.getElementById("copyCountryBtn");
+const themeToggle     = document.getElementById("themeToggle");
+const toast           = document.getElementById("toast");
+
+let currentCleaned = "";
+let currentCountry = "Unknown";
+
+/* ---------- 4. Live formatting (instant, on every keystroke) ---------- */
+function update(){
+  const raw = inputEl.value;
+  currentCleaned = cleanNumber(raw);
+  currentCountry = detectCountry(currentCleaned);
+
+  if(currentCleaned){
+    outputEl.textContent = currentCleaned;
+    outputEl.classList.remove("empty");
+    copyNumberBtn.disabled = false;
+  }else{
+    outputEl.textContent = "Result will appear here…";
+    outputEl.classList.add("empty");
+    copyNumberBtn.disabled = true;
+  }
+
+  countryEl.textContent = currentCountry;
+  copyCountryBtn.disabled = (currentCountry === "Unknown");
+}
+
+inputEl.addEventListener("input", update);
+
+/* ---------- 5. Toast helper ---------- */
+let toastTimer = null;
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> toast.classList.remove("show"), 500);
+}
+
+/* ---------- 6. Clipboard actions ---------- */
+pasteBtn.addEventListener("click", async ()=>{
+  try{
+    const text = await navigator.clipboard.readText();
+    inputEl.value = text;
+    update();
+    inputEl.focus();
+    await autoCopyAfterPaste();
+  }catch(err){
+    showToast("Clipboard blocked");
+  }
+});
+
+/* Auto-copy the cleaned result right after any paste (button or Ctrl+V). */
+async function autoCopyAfterPaste(){
+  if(!currentCleaned) return;
+  try{
+    await navigator.clipboard.writeText(currentCleaned);
+    showToast("Copied!");
+  }catch(err){
+    // Silently ignore — clipboard write may be blocked in some contexts.
+  }
+}
+
+/* Also catch native paste (Ctrl+V / long-press paste on mobile) directly
+   on the textarea, since that doesn't go through the Paste button. */
+inputEl.addEventListener("paste", ()=>{
+  // Wait a tick so the pasted text is actually in the field before cleaning.
+  setTimeout(async ()=>{
+    update();
+    await autoCopyAfterPaste();
+  }, 0);
+});
+
+copyNumberBtn.addEventListener("click", async ()=>{
+  if(!currentCleaned) return;
+  try{
+    await navigator.clipboard.writeText(currentCleaned);
+    showToast("Copied!");
+  }catch(err){
+    showToast("Copy failed");
+  }
+});
+
+copyCountryBtn.addEventListener("click", async ()=>{
+  if(currentCountry === "Unknown") return;
+  try{
+    await navigator.clipboard.writeText(currentCountry);
+    showToast("Copied!");
+  }catch(err){
+    showToast("Copy failed");
+  }
+});
+
+clearBtn.addEventListener("click", ()=>{
+  inputEl.value = "";
+  update();
+  inputEl.focus();
+});
+
+/* ---------- 7. Enter key = copy cleaned number ---------- */
+inputEl.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter"){
+    e.preventDefault(); // avoid newline in textarea
+    copyNumberBtn.click();
+  }
+});
+
+/* ---------- 8. Dark mode toggle (cached via localStorage) ---------- */
+const THEME_KEY = "phoneFormatterTheme";
+
+function applyTheme(theme){
+  if(theme === "dark"){
+    document.documentElement.setAttribute("data-theme","dark");
+    themeToggle.textContent = "☀️";
+  }else{
+    document.documentElement.removeAttribute("data-theme");
+    themeToggle.textContent = "🌙";
+  }
+}
+
+function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved){
+    applyTheme(saved);
+  }else{
+    // Respect OS preference on first visit, but still default to light per spec.
+    applyTheme("light");
+  }
+}
+
+themeToggle.addEventListener("click", ()=>{
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const next = isDark ? "light" : "dark";
+  applyTheme(next);
+  localStorage.setItem(THEME_KEY, next);
+});
+
+/* ---------- 9. Init ---------- */
+initTheme();
+inputEl.focus();
+update();
+</script>
+</body>
+</html>
