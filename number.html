@@ -167,6 +167,13 @@
     gap:10px;
     margin-top:14px;
   }
+  .btn-row-3{
+    grid-template-columns:1fr 1fr 1fr;
+  }
+  .btn-row-3 .btn{
+    padding:12px 6px;
+    font-size:.86rem;
+  }
   .btn{
     border:none;
     border-radius:10px;
@@ -258,9 +265,10 @@
   <div class="card">
     <label for="input">Paste or type a number</label>
     <textarea id="input" placeholder="+55 21 98165-2939" autofocus autocomplete="off" spellcheck="false"></textarea>
-    <div class="btn-row">
+    <div class="btn-row btn-row-3">
       <button class="btn btn-secondary" id="pasteBtn">📋 Paste</button>
       <button class="btn btn-ghost" id="clearBtn">✕ Clear</button>
+      <button class="btn btn-primary" id="copyNumberBtn" disabled>✅ Copy</button>
     </div>
   </div>
 
@@ -274,7 +282,6 @@
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-primary" id="copyNumberBtn" disabled>✅ Copy Number</button>
       <button class="btn btn-secondary" id="copyCountryBtn" disabled>🌍 Copy Country</button>
     </div>
   </div>
@@ -450,13 +457,15 @@ async function autoCopyAfterPaste(){
 }
 
 /* Also catch native paste (Ctrl+V / long-press paste on mobile) directly
-   on the textarea, since that doesn't go through the Paste button. */
-inputEl.addEventListener("paste", ()=>{
-  // Wait a tick so the pasted text is actually in the field before cleaning.
-  setTimeout(async ()=>{
-    update();
-    await autoCopyAfterPaste();
-  }, 0);
+   on the textarea. We intercept it so the OLD value is always fully
+   cleared first and replaced by ONLY the newly pasted text — never
+   inserted alongside old content. */
+inputEl.addEventListener("paste", (e)=>{
+  e.preventDefault(); // stop the browser's default insert-at-cursor paste
+  const pasted = (e.clipboardData || window.clipboardData).getData("text");
+  inputEl.value = pasted; // full replace: old content is gone
+  update();
+  autoCopyAfterPaste();
 });
 
 copyNumberBtn.addEventListener("click", async ()=>{
