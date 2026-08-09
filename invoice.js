@@ -341,7 +341,7 @@ function buildInvoiceHTML(exportMode = 'html') {
     const p3=(document.getElementById('inp-inv-p3')?.value||new Date().getFullYear()).toString().trim().toUpperCase();
     docTitle = p2 ? `${p2} ${p3}` : `${p3}`;
   }
-  const downloadFileName = `${invNum}_${appName || 'App'}`;
+  const downloadFileName = `Invoice_${invNum}_${appName || 'App'}`;
 
   const statusLabel = isPaid ? 'PAID' : 'OUTSTANDING';
   const statusColor = isPaid ? '#59cb52' : '#e65100';
@@ -373,12 +373,11 @@ function buildInvoiceHTML(exportMode = 'html') {
   if (clientEmail) clientLines += `<div style="font-size:13px;color:#444;margin-bottom:4px">${escHtml(clientEmail)}</div>`;
   if (clientPhone) clientLines += `<div style="font-size:13px;color:#444">${escHtml(clientPhone)}</div>`;
 
-  /* ── Header HTML ── */
-  const logoSrc = window.location.origin + '/logo.png';
+  const logoSrc = new URL('logo.png', document.baseURI).href;
   const headerHTML = `
   <div style="padding:20px 45px 15px; display:flex; justify-content:space-between; align-items:flex-start;">
     <div style="display:flex; align-items:center; gap:20px;">
-      <img src="${logoSrc}" style="width:75px; height:75px; object-fit:contain;" crossorigin="anonymous" onerror="this.style.display='none'">
+      <img src="${logoSrc}" style="width:75px; height:75px; object-fit:contain;" onerror="this.style.display='none'">
       <div>
         <div style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:26px; color:#1e0c82; letter-spacing:1px; line-height:1; margin-bottom:10px;">WE <span style="color:#8cc63f;">APP</span> TESTERS</div>
         <div style="font-family:'DM Sans',sans-serif; font-size:12.5px; color:#666; line-height:1.6;">
@@ -650,7 +649,7 @@ function buildInvoiceHTML(exportMode = 'html') {
   }
   .page{
     width:210mm;
-    min-height:297mm; /* Exactly A4 to fit the footer to the bottom */
+    min-height:297mm; /* Changed to 297mm to prevent bottom white gap */
     background:#fff;
     padding:0;
     display:flex;
@@ -697,7 +696,7 @@ function downloadPDF() {
   iframe.className = 'download-frame';
   iframe.style.position = 'absolute';
   iframe.style.width = '210mm';
-  iframe.style.height = '295mm';
+  iframe.style.height = '297mm';
   iframe.style.left = '-9999px';
   iframe.style.top = '0';
   document.body.appendChild(iframe);
@@ -808,7 +807,7 @@ function downloadImage() {
   iframe.className = 'download-frame';
   iframe.style.position = 'absolute';
   iframe.style.width = '210mm';
-  iframe.style.height = '295mm';
+  iframe.style.height = '296.5mm';
   iframe.style.left = '-9999px';
   iframe.style.top = '0';
   document.body.appendChild(iframe);

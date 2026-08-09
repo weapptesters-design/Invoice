@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Payment Confirmation Generator · We App Testers</title>
+<meta name="theme-color" content="#f4f5f9" id="themeColorMeta">
+<script>
+// Applied before paint so there's no flash-of-wrong-theme. Light is default.
+(function(){
+  try{
+    var saved = localStorage.getItem('wat_theme');
+    if(saved === 'dark'){
+      document.documentElement.setAttribute('data-theme','dark');
+    }
+  }catch(e){}
+})();
+</script>
+<style>
+/* ==========================================================================
+   TOKENS — We App Testers · Payment Confirmation Generator
+   Dense, single-screen entry flow: fields ordered exactly as they read out
+   loud, tight vertical rhythm, receipt-style live preview tucked behind a
+   toggle so the form itself stays on one screen.
+   Light is the default theme (better legibility at low screen brightness);
+   dark is available via the toggle in the header.
+   ========================================================================== */
+:root{
+  --bg:#f3f4f9;
+  --bg-grad:#eceef5;
+  --surface:#ffffff;
+  --surface-2:#f1f3f8;
+  --surface-3:#e6e9f2;
+  --border:#dcdfea;
+  --border-soft:#e7e9f2;
+  --text:#1a1d29;
+  --text-muted:#5b6175;
+  --text-faint:#868da2;
+  --accent:#059669;
+  --accent-strong:#047857;
+  --accent-dim:rgba(5,150,105,.12);
+  --accent-2:#b45309;
+  --danger:#dc2626;
+  --danger-dim:rgba(220,38,38,.10);
+  --radius-lg:18px;
+  --radius-md:13px;
+  --radius-sm:10px;
+  --shadow-card:0 1px 2px rgba(20,24,40,.05), 0 8px 20px -12px rgba(20,24,40,.18);
+  --font-display:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono','JetBrains Mono',Consolas,monospace;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+
+html[data-theme="dark"]{
+  --bg:#0d0f14;
+  --bg-grad:#11141b;
+  --surface:#171b24;
+  --surface-2:#1e2330;
+  --surface-3:#262c3c;
+  --border:#2a3040;
+  --border-soft:#20242f;
+  --text:#e9ebf2;
+  --text-muted:#9399ad;
+  --text-faint:#5c6377;
+  --accent:#34d399;
+  --accent-strong:#10b981;
+  --accent-dim:rgba(52,211,153,.13);
+  --accent-2:#fbbf24;
+  --danger:#f87171;
+  --danger-dim:rgba(248,113,113,.13);
+  --shadow-card:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.55);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--accent-dim) 0%, transparent 60%),
+    linear-gradient(180deg,var(--bg-grad),var(--bg) 300px);
+  color:var(--text);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  padding-bottom:calc(84px + var(--safe-b));
+}
+::selection{background:var(--accent-dim);color:var(--accent);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+}
+
+.wrap{max-width:520px;margin:0 auto;padding:0 14px;}
+
+/* ---------- Header ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  background:rgba(255,255,255,.78);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--border-soft);
+}
+html[data-theme="dark"] .topbar{background:rgba(13,15,20,.85);}
+.topbar-inner{
+  max-width:520px;margin:0 auto;padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+}
+.brand-mark{
+  width:32px;height:32px;border-radius:10px;flex:0 0 auto;
+  background:linear-gradient(155deg,var(--accent) 0%,var(--accent-strong) 100%);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px -4px rgba(16,185,129,.55);
+}
+.brand-mark svg{width:17px;height:17px;}
+.brand-text{line-height:1.1;}
+.brand-text .title{font-family:var(--font-display);font-weight:700;font-size:14.5px;letter-spacing:-.01em;}
+.brand-text .subtitle{font-size:11px;color:var(--text-muted);margin-top:0;}
+.theme-toggle{
+  margin-left:auto;flex:0 0 auto;
+  width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text-muted);cursor:pointer;
+  transition:background .15s ease,color .15s ease,border-color .15s ease,transform .1s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.theme-toggle:active{transform:scale(.92);}
+.theme-toggle svg{width:17px;height:17px;}
+.theme-toggle .icon-moon{display:none;}
+html[data-theme="dark"] .theme-toggle .icon-sun{display:none;}
+html[data-theme="dark"] .theme-toggle .icon-moon{display:block;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+/* ---------- Form card: everything lives here, tightly packed ---------- */
+.form-card{
+  background:var(--surface);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  padding:14px;
+  margin-top:12px;
+}
+.frow{
+  display:flex;align-items:flex-end;gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid var(--border-soft);
+}
+.frow:first-child{padding-top:0;}
+.frow:last-child{border-bottom:none;padding-bottom:0;}
+.frow-label{
+  flex:0 0 auto;
+  width:74px;
+  font-size:11px;font-weight:700;color:var(--text-muted);
+  letter-spacing:.02em;text-transform:uppercase;
+  padding-bottom:9px;
+  line-height:1.25;
+}
+.frow-label .opt{display:block;font-weight:400;text-transform:none;color:var(--text-faint);font-size:9.5px;letter-spacing:0;margin-top:1px;}
+.frow-body{flex:1;min-width:0;}
+
+/* ---------- Fields ---------- */
+.input{
+  width:100%;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-size:15px;
+  font-family:var(--font-body);
+  padding:9px 11px;
+  border-radius:var(--radius-sm);
+  transition:border-color .15s ease, background .15s ease, box-shadow .15s ease;
+  appearance:none;-webkit-appearance:none;
+}
+.input::placeholder{color:var(--text-faint);opacity:.45;}
+.input:focus{
+  border-color:var(--accent);background:var(--surface-3);
+  box-shadow:0 0 0 3px var(--accent-dim);outline:none;
+}
+.input.has-error{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-dim);}
+.input{color:var(--text) !important;-webkit-text-fill-color:var(--text);}
+.input[type=date]{color-scheme:light;}
+html[data-theme="dark"] .input[type=date]{color-scheme:dark;}
+/* Some Android/iOS WebViews render the native date digits black regardless
+   of color-scheme — force them white explicitly. */
+.input[type=date]::-webkit-datetime-edit,
+.input[type=date]::-webkit-datetime-edit-fields-wrapper,
+.input[type=date]::-webkit-datetime-edit-text,
+.input[type=date]::-webkit-datetime-edit-day-field,
+.input[type=date]::-webkit-datetime-edit-month-field,
+.input[type=date]::-webkit-datetime-edit-year-field{
+  color:var(--text) !important;
+  -webkit-text-fill-color:var(--text);
+}
+.input[type=date]::-webkit-calendar-picker-indicator{opacity:.65;}
+html[data-theme="dark"] .input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.6);opacity:1;}
+.input.compact{max-width:96px;text-align:center;font-variant-numeric:tabular-nums;}
+.prefix-input{position:relative;}
+.prefix-input .prefix{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  color:var(--text-muted);font-size:15px;pointer-events:none;
+}
+.prefix-input .input{padding-left:24px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* ---------- Radio chip groups ---------- */
+.chip-group{display:flex;gap:6px;flex-wrap:wrap;}
+.chip-group .chip{flex:1 1 0;min-width:0;}
+.chip{position:relative;}
+.chip input{position:absolute;opacity:0;width:0;height:0;}
+.chip label{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 6px;
+  border:1.5px solid var(--border);
+  background:var(--surface-2);
+  border-radius:var(--radius-sm);
+  font-size:12.5px;font-weight:600;color:var(--text-muted);
+  cursor:pointer;user-select:none;text-align:center;
+  transition:border-color .15s ease, background .15s ease, color .15s ease, transform .1s ease;
+  white-space:nowrap;
+}
+.chip label .dot{
+  width:6px;height:6px;border-radius:50%;border:1.5px solid var(--text-faint);
+  flex:0 0 auto;transition:all .15s ease;
+}
+.chip input:checked + label{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);}
+.chip input:checked + label .dot{border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.chip input:focus-visible + label{outline:2px solid var(--accent);outline-offset:2px;}
+.chip label:active{transform:scale(.96);}
+
+/* Payment number row is the one explicitly asked to shrink */
+.payno-row .frow-body{display:flex;align-items:center;gap:10px;}
+
+/* ---------- Dynamic method row ---------- */
+#methodRow{
+  overflow:hidden;max-height:0;opacity:0;
+  transition:max-height .28s ease, opacity .24s ease, padding .28s ease;
+  padding:0;border-bottom:none;
+}
+#methodRow.expanded{max-height:80px;opacity:1;padding:8px 0;border-bottom:1px solid var(--border-soft);}
+
+/* ---------- Computed row (order id / apply4production) ---------- */
+.computed-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.computed-row .v{font-family:var(--font-mono);font-size:12.5px;color:var(--accent-2);font-weight:600;text-align:right;word-break:break-all;}
+.computed-row .v.empty{color:var(--text-faint);font-weight:400;}
+.order-strip{
+  margin-top:10px;padding:9px 11px;border-radius:var(--radius-sm);
+  background:linear-gradient(155deg,var(--accent-dim),transparent 75%);
+  border:1px solid rgba(52,211,153,.28);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.order-strip .k{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);font-weight:700;}
+.order-strip .v{font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--accent);word-break:break-all;text-align:right;}
+.order-strip .v.empty{color:var(--text-faint);font-weight:400;}
+
+/* ---------- Preview toggle + collapsible receipt ---------- */
+.preview-toggle{
+  width:100%;margin-top:10px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text-muted);font-family:var(--font-display);font-weight:700;font-size:12.5px;
+  padding:9px;border-radius:var(--radius-sm);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.preview-toggle svg{width:14px;height:14px;transition:transform .2s ease;}
+.preview-toggle.open svg{transform:rotate(180deg);}
+.preview-toggle:active{transform:scale(.98);}
+
+.preview-collapse{
+  overflow:hidden;max-height:0;opacity:0;
+  transition:max-height .32s ease, opacity .26s ease, margin .32s ease;
+}
+.preview-collapse.open{max-height:520px;opacity:1;margin-top:10px;}
+
+.receipt{
+  position:relative;background:#0f1218;border:1px solid var(--border-soft);
+  border-radius:14px;box-shadow:var(--shadow-card);padding:18px 16px 20px;
+}
+.receipt::before, .receipt::after{
+  content:"";position:absolute;left:0;right:0;height:10px;
+  background:
+    linear-gradient(135deg,transparent 50%, var(--bg) 50%) 0 0/12px 12px repeat-x,
+    linear-gradient(-135deg,transparent 50%, var(--bg) 50%) 0 0/12px 12px repeat-x;
+  background-position:0 0, 6px 0;
+}
+.receipt::before{top:-1px;transform:scaleY(-1);}
+.receipt::after{bottom:-1px;}
+.receipt-body{
+  font-family:var(--font-mono);font-size:12px;line-height:1.6;color:#d7dbe6;
+  white-space:pre-wrap;word-break:break-word;max-height:320px;overflow-y:auto;
+}
+.receipt-body::-webkit-scrollbar{width:6px;}
+.receipt-body::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:6px;}
+
+/* ---------- Action bar ---------- */
+.actionbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  padding:10px 14px calc(10px + var(--safe-b));
+  background:linear-gradient(180deg, rgba(243,244,249,0) 0%, rgba(243,244,249,.94) 24%, rgba(243,244,249,.98) 100%);
+}
+html[data-theme="dark"] .actionbar{
+  background:linear-gradient(180deg, rgba(13,15,20,0) 0%, rgba(13,15,20,.94) 24%, rgba(13,15,20,.98) 100%);
+}
+.actionbar-inner{max-width:520px;margin:0 auto;display:flex;gap:9px;}
+.btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  font-family:var(--font-display);font-weight:700;font-size:14.5px;
+  padding:13px 14px;border-radius:13px;border:1px solid transparent;
+  cursor:pointer;transition:transform .12s ease, filter .15s ease, background .15s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active{transform:scale(.97);}
+.btn svg{width:17px;height:17px;}
+.btn-primary{
+  background:linear-gradient(155deg,var(--accent) 0%, var(--accent-strong) 100%);
+  color:#06251a;flex:1.7;box-shadow:0 6px 18px -6px rgba(16,185,129,.55);
+}
+.btn-ghost{background:var(--surface-2);border-color:var(--border);color:var(--text-muted);}
+.btn-ghost:hover{color:var(--text);border-color:var(--text-faint);}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:86px;transform:translate(-50%,16px);
+  z-index:50;display:flex;align-items:center;gap:9px;
+  background:#0e2a1f;color:var(--accent);border:1px solid rgba(52,211,153,.4);
+  padding:11px 17px;border-radius:999px;font-family:var(--font-display);font-weight:700;font-size:13px;
+  box-shadow:0 10px 30px -8px rgba(16,185,129,.5);
+  opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;
+}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
+.toast.error{background:#2a1414;color:var(--danger);border-color:rgba(248,113,113,.4);box-shadow:0 10px 30px -8px rgba(248,113,113,.45);}
+.toast svg{width:16px;height:16px;flex:0 0 auto;}
+
+.foot-note{text-align:center;color:var(--text-faint);font-size:10.5px;margin:14px 0 4px;letter-spacing:.02em;}
+
+@media (max-width:360px){
+  .frow-label{width:62px;font-size:10px;}
+  .chip label{font-size:11.5px;padding:8px 4px;}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#06251a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10h18M7 15h2M3 6h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="title">We App Testers</div>
+      <div class="subtitle">Payment Confirmation Generator</div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="form-card">
+
+    <!-- 1. Payment Number -->
+    <div class="frow payno-row">
+      <div class="frow-label">No.</div>
+      <div class="frow-body">
+        <input class="input compact" id="paymentNumber" type="text" inputmode="numeric" value="01" maxlength="6" enterkeyhint="next">
+      </div>
+    </div>
+
+    <!-- 2. Payment percentage -->
+    <div class="frow">
+      <div class="frow-label">Percent</div>
+      <div class="frow-body">
+        <div class="chip-group" id="statusGroup">
+          <div class="chip"><input type="radio" name="status" id="status0" value="0"><label for="status0"><span class="dot"></span>0%</label></div>
+          <div class="chip"><input type="radio" name="status" id="status50" value="50"><label for="status50"><span class="dot"></span>50%</label></div>
+          <div class="chip"><input type="radio" name="status" id="status100" value="100"><label for="status100"><span class="dot"></span>100%</label></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Currency -->
+    <div class="frow">
+      <div class="frow-label">Currency</div>
+      <div class="frow-body">
+        <div class="chip-group" id="currencyGroup">
+          <div class="chip"><input type="radio" name="currency" id="curINR" value="INR"><label for="curINR"><span class="dot"></span>INR ₹</label></div>
+          <div class="chip"><input type="radio" name="currency" id="curUSD" value="USD"><label for="curUSD"><span class="dot"></span>USD $</label></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Amount -->
+    <div class="frow">
+      <div class="frow-label">Amount</div>
+      <div class="frow-body">
+        <div class="prefix-input">
+          <span class="prefix" id="amountPrefix">₹</span>
+          <input class="input" id="amount" type="number" inputmode="decimal" min="0" step="0.01" enterkeyhint="next">
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Payment method (dynamic) -->
+    <div class="frow" id="methodRow">
+      <div class="frow-label">Method</div>
+      <div class="frow-body">
+        <div class="chip-group" id="methodGroupINR" style="display:none;">
+          <div class="chip"><input type="radio" name="method" id="mCBI" value="CBI UPI"><label for="mCBI"><span class="dot"></span>CBI UPI</label></div>
+          <div class="chip"><input type="radio" name="method" id="mSBI" value="SBI UPI"><label for="mSBI"><span class="dot"></span>SBI UPI</label></div>
+          <div class="chip"><input type="radio" name="method" id="mFINO" value="FINO UPI"><label for="mFINO"><span class="dot"></span>FINO UPI</label></div>
+        </div>
+        <div class="chip-group" id="methodGroupUSD" style="display:none;">
+          <div class="chip"><input type="radio" name="method" id="mPayPal" value="PayPal"><label for="mPayPal"><span class="dot"></span>PayPal</label></div>
+          <div class="chip"><input type="radio" name="method" id="mBinance" value="Binance"><label for="mBinance"><span class="dot"></span>Binance</label></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. App Code + App Name -->
+    <div class="frow">
+      <div class="frow-label">App</div>
+      <div class="frow-body">
+        <div class="two-col">
+          <input class="input" id="appCode" type="text" placeholder="Code" autocomplete="off" autocapitalize="characters" maxlength="12" enterkeyhint="next">
+          <input class="input" id="appName" type="text" placeholder="Name" autocomplete="off" autocapitalize="words" enterkeyhint="next">
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Play Store Link -->
+    <div class="frow">
+      <div class="frow-label">Link</div>
+      <div class="frow-body">
+        <input class="input" id="playLink" type="url" autocomplete="off" autocapitalize="off" enterkeyhint="next">
+      </div>
+    </div>
+
+    <!-- Transaction ID (optional, out of the quick-flow order on purpose) -->
+    <div class="frow">
+      <div class="frow-label">Txn ID <span class="opt">optional</span></div>
+      <div class="frow-body">
+        <input class="input" id="transactionId" type="text" autocomplete="off" autocapitalize="characters" enterkeyhint="done">
+      </div>
+    </div>
+
+    <!-- 8. Start Date — defaults to today (IST), editable -->
+    <div class="frow">
+      <div class="frow-label">Start <span class="opt">(IST)</span></div>
+      <div class="frow-body">
+        <input class="input" id="startDate" type="date">
+      </div>
+    </div>
+
+    <!-- Computed: Apply4production -->
+    <div class="frow">
+      <div class="frow-label">+14 days</div>
+      <div class="frow-body computed-row">
+        <span class="v empty" id="apply4prodValue">—</span>
+      </div>
+    </div>
+
+    <!-- Auto Order ID -->
+    <div class="order-strip">
+      <span class="k">Order ID</span>
+      <span class="v empty" id="orderIdValue">BX026Q···</span>
+    </div>
+
+    <!-- Preview toggle -->
+    <button class="preview-toggle" id="previewToggle" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      Show live preview
+    </button>
+    <div class="preview-collapse" id="previewCollapse">
+      <div class="receipt">
+        <div class="receipt-body" id="previewBody">Fill in the form to build the confirmation…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot-note">weapptesters.com · works fully offline</div>
+</main>
+
+<div class="actionbar">
+  <div class="actionbar-inner">
+    <button class="btn btn-ghost" id="resetBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      Reset
+    </button>
+    <button class="btn btn-primary" id="generateBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#06251a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      Generate &amp; Copy
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+  <span id="toastMsg">Copied Successfully ✅</span>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------------------------------------------------------------
+     Element references
+     --------------------------------------------------------------------- */
+  var el = {
+    paymentNumber: document.getElementById('paymentNumber'),
+    amount: document.getElementById('amount'),
+    amountPrefix: document.getElementById('amountPrefix'),
+    transactionId: document.getElementById('transactionId'),
+    appCode: document.getElementById('appCode'),
+    appName: document.getElementById('appName'),
+    playLink: document.getElementById('playLink'),
+    startDate: document.getElementById('startDate'),
+    apply4prodValue: document.getElementById('apply4prodValue'),
+    orderIdValue: document.getElementById('orderIdValue'),
+    methodRow: document.getElementById('methodRow'),
+    methodGroupINR: document.getElementById('methodGroupINR'),
+    methodGroupUSD: document.getElementById('methodGroupUSD'),
+    previewToggle: document.getElementById('previewToggle'),
+    previewCollapse: document.getElementById('previewCollapse'),
+    previewBody: document.getElementById('previewBody'),
+    generateBtn: document.getElementById('generateBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    themeToggle: document.getElementById('themeToggle'),
+    toast: document.getElementById('toast'),
+    toastMsg: document.getElementById('toastMsg')
+  };
+
+  var STORAGE_KEY = 'wat_payment_confirmation_v1';
+  var toastTimer = null;
+
+  /* ---------------------------------------------------------------------
+     Helpers
+     --------------------------------------------------------------------- */
+  function getRadioValue(name){
+    var n = document.querySelector('input[name="' + name + '"]:checked');
+    return n ? n.value : '';
+  }
+  function setRadioValue(name, value){
+    if(!value) return;
+    var n = document.querySelector('input[name="' + name + '"][value="' + CSS.escape(value) + '"]');
+    if(n) n.checked = true;
+  }
+  function formatDate(date){
+    return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(date);
+  }
+  function parseDateInput(str){
+    var parts = str.split('-');
+    return new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+  }
+  function addDays(date, days){
+    var d = new Date(date.getTime());
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+  function todayIST(){
+    // returns YYYY-MM-DD for the current date in India Standard Time
+    return new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Kolkata' }).format(new Date());
+  }
+  function suffixForStatus(status){
+    if(status === '0') return 'X';
+    if(status === '50') return 'Y';
+    if(status === '100') return 'Z';
+    return '';
+  }
+  function currencySymbol(cur){
+    if(cur === 'INR') return '₹';
+    if(cur === 'USD') return '$';
+    return '';
+  }
+
+  /* ---------------------------------------------------------------------
+     Read current form state
+     --------------------------------------------------------------------- */
+  function readState(){
+    return {
+      paymentNumber: el.paymentNumber.value.trim(),
+      amount: el.amount.value.trim(),
+      status: getRadioValue('status'),
+      currency: getRadioValue('currency'),
+      method: getRadioValue('method'),
+      transactionId: el.transactionId.value.trim(),
+      appCode: el.appCode.value.trim().toUpperCase(),
+      appName: el.appName.value.trim(),
+      playLink: el.playLink.value.trim(),
+      startDate: el.startDate.value
+    };
+  }
+
+  /* ---------------------------------------------------------------------
+     Derived values (order id, dates)
+     --------------------------------------------------------------------- */
+  function computeOrderId(state){
+    if(!state.appCode || !state.status) return '';
+    return 'BX026Q' + state.appCode + suffixForStatus(state.status);
+  }
+  function computeDates(state){
+    if(!state.startDate) return { start:null, apply:null };
+    var start = parseDateInput(state.startDate);
+    var apply = addDays(start, 14);
+    return { start:start, apply:apply };
+  }
+
+  /* ---------------------------------------------------------------------
+     Build the confirmation text.
+     strict = true  -> used by Generate, throws on missing required fields
+     strict = false -> used by the live preview, tolerant of gaps
+     --------------------------------------------------------------------- */
+  function buildOutput(state, strict){
+    var missing = [];
+    if(!state.amount) missing.push('Amount');
+    if(!state.status) missing.push('Payment Status');
+    if(!state.currency) missing.push('Currency');
+    if(!state.method) missing.push('Payment Method');
+    if(!state.appCode) missing.push('App Code');
+    if(!state.appName) missing.push('App Name');
+    if(!state.playLink) missing.push('Play Store Link');
+    if(!state.startDate) missing.push('Start Date');
+
+    if(strict && missing.length){
+      var err = new Error('Please fill in: ' + missing.join(', '));
+      err.missing = missing;
+      throw err;
+    }
+
+    var dates = computeDates(state);
+    var orderId = computeOrderId(state);
+    var ph = strict ? '' : '—';
+
+    var numberLabel = state.paymentNumber || (ph || '1');
+    var statusLabel = state.status || ph;
+    var sym = currencySymbol(state.currency);
+    var amountLine = sym + (state.amount || ph) + ' ' + (state.currency || ph) + ' in ' + (state.method || ph);
+
+    // Exact line-by-line spacing per spec — no « » symbols, no smart quotes,
+    // no extra indentation, highlighted lines use "> " only. Blank lines are
+    // only where explicitly shown below; several sections near the end run
+    // back-to-back with no blank line between them.
+    var lines = [];
+
+    lines.push(numberLabel + '. 💰' + statusLabel + '% Payment Received ✅ ' + amountLine);
+    if(state.transactionId){
+      lines.push('Transaction id : ' + state.transactionId);
+    }
+    if(state.status === '0'){
+      lines.push('> Remaining payment before testing starts');
+    } else if(state.status === '50'){
+      lines.push('> Remaining payment after Production Access approval');
+    }
+    lines.push('');
+    lines.push('> ' + (state.appCode || ph) + ' ' + (state.appName || ph));
+    lines.push('Link 🔗');
+    lines.push(state.playLink || ph);
+    lines.push('');
+    lines.push('Start : ' + (dates.start ? formatDate(dates.start) : ph) + ' (IST)');
+    lines.push('Apply4production : ' + (dates.apply ? formatDate(dates.apply) : ph));
+    lines.push('');
+    lines.push('Order Id: ' + (orderId || ph));
+    lines.push('╔══════════════╗');
+    lines.push('🚀 Production Questions Answer');
+    lines.push('Will be shared.');
+    lines.push('');
+    lines.push('🌟 Private Feedback/Review');
+    lines.push('Will be done in Play Store before 14 days completion.');
+    lines.push('');
+    lines.push('📌 Confirmation');
+    lines.push('This is the official confirmation text from my side for easy management., No need to reply.');
+    lines.push('╚══════════════╝');
+    lines.push('> Add our contact number');
+    lines.push('+919122061839');
+    lines.push('> for future use');
+    lines.push('-----------------------------------');
+    lines.push('🔹 *Tracking Page:*');
+    lines.push('https://weapptesters.com/client_tracking');
+    lines.push('Please note:');
+    lines.push('Data on this page may have a delay of up to 24 hours due to update processing.');
+    lines.push('');
+    lines.push('🧾 *Want an Invoice/Receipt?*');
+    lines.push("Let us know, and we'll send it to you.");
+
+    return lines.join('\n');
+  }
+
+  /* ---------------------------------------------------------------------
+     UI updates
+     --------------------------------------------------------------------- */
+  function updateMethodVisibility(state){
+    var hasCurrency = !!state.currency;
+    el.methodGroupINR.style.display = state.currency === 'INR' ? 'flex' : 'none';
+    el.methodGroupUSD.style.display = state.currency === 'USD' ? 'flex' : 'none';
+    el.methodRow.classList.toggle('expanded', hasCurrency);
+    if(!hasCurrency){
+      var checked = document.querySelector('input[name="method"]:checked');
+      if(checked) checked.checked = false;
+    }
+    el.amountPrefix.textContent = state.currency === 'USD' ? '$' : '₹';
+  }
+
+  function updateComputed(state){
+    var dates = computeDates(state);
+    if(dates.apply){
+      el.apply4prodValue.textContent = formatDate(dates.apply);
+      el.apply4prodValue.classList.remove('empty');
+    } else {
+      el.apply4prodValue.textContent = '—';
+      el.apply4prodValue.classList.add('empty');
+    }
+
+    var orderId = computeOrderId(state);
+    if(orderId){
+      el.orderIdValue.textContent = orderId;
+      el.orderIdValue.classList.remove('empty');
+    } else {
+      el.orderIdValue.textContent = 'BX026Q···';
+      el.orderIdValue.classList.add('empty');
+    }
+  }
+
+  function updatePreview(state){
+    el.previewBody.textContent = buildOutput(state, false);
+  }
+
+  function renderAll(){
+    var state = readState();
+    updateMethodVisibility(state);
+    updateComputed(state);
+    updatePreview(state);
+    persist(state);
+  }
+
+  /* ---------------------------------------------------------------------
+     Persistence (Local Storage) — Transaction ID and Start Date are
+     intentionally excluded: a stale ID must never be reused, and Start
+     Date should default to today on every fresh visit.
+     --------------------------------------------------------------------- */
+  function persist(state){
+    var toSave = {
+      paymentNumber: state.paymentNumber,
+      status: state.status,
+      currency: state.currency,
+      method: state.method,
+      appCode: state.appCode,
+      appName: state.appName,
+      playLink: state.playLink
+    };
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)); }catch(e){}
+  }
+
+  function restore(){
+    var raw;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){ raw = null; }
+    if(raw){
+      var data;
+      try{ data = JSON.parse(raw); }catch(e){ data = null; }
+      if(data){
+        if(data.paymentNumber) el.paymentNumber.value = data.paymentNumber;
+        if(data.appCode) el.appCode.value = data.appCode;
+        if(data.appName) el.appName.value = data.appName;
+        if(data.playLink) el.playLink.value = data.playLink;
+        setRadioValue('status', data.status);
+        setRadioValue('currency', data.currency);
+        updateMethodVisibility(readState());
+        setRadioValue('method', data.method);
+      }
+    }
+    el.startDate.value = todayIST();
+  }
+
+  /* ---------------------------------------------------------------------
+     Toast
+     --------------------------------------------------------------------- */
+  function showToast(message, isError){
+    el.toastMsg.textContent = message;
+    el.toast.classList.toggle('error', !!isError);
+    el.toast.classList.add('show');
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.toast.classList.remove('show'); }, 2600);
+  }
+
+  /* ---------------------------------------------------------------------
+     Clipboard (with graceful fallback)
+     --------------------------------------------------------------------- */
+  function copyToClipboard(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function(resolve, reject){
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        ok ? resolve() : reject(new Error('copy failed'));
+      }catch(e){ reject(e); }
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     Payment number auto-increment (preserves leading-zero width)
+     --------------------------------------------------------------------- */
+  function incrementPaymentNumber(value){
+    var digits = value.replace(/[^0-9]/g,'');
+    if(!digits) return value;
+    var width = digits.length;
+    var next = parseInt(digits, 10) + 1;
+    var nextStr = String(next);
+    if(nextStr.length < width){ nextStr = nextStr.padStart(width, '0'); }
+    return nextStr;
+  }
+
+  /* ---------------------------------------------------------------------
+     Generate
+     --------------------------------------------------------------------- */
+  function handleGenerate(){
+    var state = readState();
+    var text;
+    try{
+      text = buildOutput(state, true);
+    }catch(e){
+      showToast(e.missing ? ('Missing: ' + e.missing[0] + (e.missing.length > 1 ? ' +' + (e.missing.length-1) + ' more' : '')) : 'Please complete the form', true);
+      flashInvalid(e.missing || []);
+      return;
+    }
+
+    copyToClipboard(text).then(function(){
+      showToast('Copied Successfully ✅', false);
+      el.transactionId.value = '';
+      el.startDate.value = todayIST();
+      renderAll();
+    }).catch(function(){
+      showToast('Could not copy — select the preview text manually', true);
+    });
+  }
+
+  function flashInvalid(missingLabels){
+    var map = {
+      'Amount': el.amount,
+      'App Code': el.appCode,
+      'App Name': el.appName,
+      'Play Store Link': el.playLink,
+      'Start Date': el.startDate
+    };
+    Object.keys(map).forEach(function(k){
+      if(missingLabels.indexOf(k) !== -1){
+        var node = map[k];
+        node.classList.add('has-error');
+        setTimeout(function(){ node.classList.remove('has-error'); }, 1600);
+      }
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     Reset
+     --------------------------------------------------------------------- */
+  function handleReset(){
+    document.querySelectorAll('input[type=radio]').forEach(function(r){ r.checked = false; });
+    el.amount.value = '';
+    el.transactionId.value = '';
+    el.appCode.value = '';
+    el.appName.value = '';
+    el.playLink.value = '';
+    el.paymentNumber.value = '01';
+    el.startDate.value = todayIST();
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    renderAll();
+    showToast('Form reset', false);
+  }
+
+  /* ---------------------------------------------------------------------
+     Preview toggle
+     --------------------------------------------------------------------- */
+  function togglePreview(){
+    var open = el.previewCollapse.classList.toggle('open');
+    el.previewToggle.classList.toggle('open', open);
+    el.previewToggle.lastChild.textContent = open ? ' Hide live preview' : ' Show live preview';
+  }
+
+  var THEME_KEY = 'wat_theme';
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+    var meta = document.getElementById('themeColorMeta');
+    if(meta) meta.setAttribute('content', theme === 'dark' ? '#0d0f14' : '#f4f5f9');
+  }
+  function toggleTheme(){
+    var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try{ localStorage.setItem(THEME_KEY, next); }catch(e){}
+  }
+
+  /* ---------------------------------------------------------------------
+     App Name — capitalize the first letter of every word as you type,
+     regardless of what the device keyboard does with autocapitalize.
+     --------------------------------------------------------------------- */
+  function titleCase(str){
+    return str.replace(/(^|\s)([a-z])/g, function(m, sep, ch){ return sep + ch.toUpperCase(); });
+  }
+  el.appName.addEventListener('input', function(){
+    var pos = el.appName.selectionStart;
+    var fixed = titleCase(el.appName.value);
+    if(fixed !== el.appName.value){
+      el.appName.value = fixed;
+      el.appName.setSelectionRange(pos, pos);
+    }
+  });
+
+  /* ---------------------------------------------------------------------
+     Enter key moves to the next field (mobile keyboard "next" behaviour)
+     instead of doing nothing. Last field in the chain closes the keyboard.
+     --------------------------------------------------------------------- */
+  var enterChain = [el.paymentNumber, el.amount, el.appCode, el.appName, el.playLink, el.transactionId];
+  enterChain.forEach(function(node, i){
+    node.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      var next = enterChain[i + 1];
+      if(next){
+        next.focus();
+        if(typeof next.select === 'function' && next.type !== 'date') next.select();
+      } else {
+        node.blur();
+      }
+    });
+  });
+
+  /* ---------------------------------------------------------------------
+     Wire up events
+     --------------------------------------------------------------------- */
+  var watched = [el.paymentNumber, el.amount, el.transactionId, el.appCode, el.appName, el.playLink, el.startDate];
+  watched.forEach(function(node){
+    node.addEventListener('input', renderAll);
+    node.addEventListener('change', renderAll);
+  });
+  document.querySelectorAll('input[type=radio]').forEach(function(node){
+    node.addEventListener('change', renderAll);
+  });
+  el.generateBtn.addEventListener('click', handleGenerate);
+  el.resetBtn.addEventListener('click', handleReset);
+  el.previewToggle.addEventListener('click', togglePreview);
+  el.themeToggle.addEventListener('click', toggleTheme);
+
+  /* ---------------------------------------------------------------------
+     Init
+     --------------------------------------------------------------------- */
+  // Sync the theme-color meta / attribute with whatever the head script
+  // already applied (or the light default if nothing was saved).
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+  restore();
+  renderAll();
+})();
+</script>
+</body>
+</html>
