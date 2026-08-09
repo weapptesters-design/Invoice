@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Invoice Generator - We App Testers</title>
+<link rel="stylesheet" href="invoice.css?v=9">
+</head>
+<body>
+
+<!-- FORM PANEL -->
+<div id="form-panel">
+  <h2>Invoice Generator - We App Testers</h2>
+
+  <!-- Settings -->
+  <div class="form-section">
+    <div class="form-section-title">Invoice Settings</div>
+    <div class="form-grid grid-3">
+      <div class="form-group">
+        <label>Document Title</label>
+        <input id="inp-doc-title" type="text" value="INVOICE">
+      </div>
+      <div class="form-group">
+        <label>Master Currency</label>
+        <select id="inp-master-currency">
+          <option value="₹">₹ INR</option>
+          <option value="$">$ USD</option>
+          <option value="€">€ EUR</option>
+          <option value="£">£ GBP</option>
+          <option value="A$">A$ AUD</option>
+          <option value="C$">C$ CAD</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Invoice Date</label>
+        <input id="inp-date" type="date">
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Info -->
+  <div class="form-section">
+    <div class="form-section-title">Client Information</div>
+    <div class="form-grid">
+      <div class="form-group mobile-full">
+        <label>Client Name <span class="required">*</span></label>
+        <input id="inp-client-name" type="text" placeholder="e.g. Sumit Kumar" autocomplete="off">
+      </div>
+      <div class="form-group mobile-full">
+        <label>Client Email <span class="optional">(optional)</span></label>
+        <input id="inp-client-email" type="email" placeholder="client@gmail.com">
+      </div>
+      <div class="form-group mobile-full">
+        <label>Client Phone <span class="optional">(optional)</span></label>
+        <input id="inp-client-phone" type="text" placeholder="+91 9876543210">
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Number -->
+  <div class="form-section">
+    <div class="form-section-title" style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="chk-doc-title-format" checked style="cursor:pointer;" title="Use App Code and Year as Document Title">
+      Invoice Number
+    </div>
+    <div class="inv-num-parts">
+      <input id="inp-inv-p1" type="text" value="WAT" maxlength="8"
+             style="width:70px;flex:none;text-align:center">
+      <span class="inv-num-sep">–</span>
+      <input id="inp-inv-p2" type="text" placeholder="App Code e.g. 27FB"
+             style="flex:1">
+      <span class="inv-num-sep">–</span>
+      <input id="inp-inv-p3" type="text" maxlength="8" placeholder="Year"
+             style="width:80px;flex:none;text-align:center">
+    </div>
+    <div class="inv-num-preview">Preview: <strong id="inv-num-preview">WAT-2026</strong></div>
+  </div>
+
+  <!-- App Testing Details -->
+  <div class="form-section">
+    <div class="form-section-title">App &amp; Test Details</div>
+    <div class="form-grid">
+      <div class="form-group mobile-full">
+        <label>App Name</label>
+        <input id="inp-app-name" type="text" placeholder="My App Name">
+      </div>
+      <div class="form-group mobile-full">
+        <label>Package / Play Store URL</label>
+        <input id="inp-pkg-name" type="text"
+               placeholder="com.example.app or Play Store URL">
+      </div>
+      <div class="form-group">
+        <label>Testers Count</label>
+        <input id="inp-testers" type="text" placeholder="12+ Testers" value="12+ Testers">
+      </div>
+      <div class="form-group">
+        <label>Testing Duration</label>
+        <input id="inp-duration" type="text" placeholder="14 Days" value="14 Days">
+      </div>
+    </div>
+  </div>
+
+  <!-- Services -->
+  <div class="form-section">
+    <div class="form-section-title">Services (add one or multiple)</div>
+    <div id="service-list"></div>
+    <div class="add-svc-row">
+      <button id="btn-add-14day" class="btn-svc">+ 14-Day Testing</button>
+      <button id="btn-add-custom" class="btn-svc">+ Custom Service</button>
+    </div>
+  </div>
+
+  <!-- Package Price Preset -->
+  <div class="form-section">
+    <div class="form-section-title">Package Price Preset</div>
+    <div id="preset-radios" class="preset-pills"></div>
+    <div id="custom-price-wrap">
+      <select id="inp-custom-currency">
+        <option value="₹">₹ INR</option>
+        <option value="$">$ USD</option>
+      </select>
+      <input id="inp-custom-price" type="number" min="0" step="0.01"
+             placeholder="Enter amount">
+    </div>
+    <div class="agreed-row">
+      <label>Final Agreed Price</label>
+      <input id="inp-agreed-price" type="number" min="0" step="0.01"
+             placeholder="Optional — if discount given">
+      <span class="hint">Leave empty if no discount</span>
+    </div>
+  </div>
+
+  <!-- Payment History -->
+  <div class="form-section">
+    <div class="form-section-title">
+      Payment History
+    </div>
+    <div id="payment-list"></div>
+    <button id="btn-add-payment" class="btn-add">+ Add Payment Entry</button>
+    <label class="manual-toggle">
+      <input type="checkbox" id="chk-manual">
+      Override Total Received Manually
+    </label>
+    <div id="manual-field">
+      <span>Total Received:</span>
+      <input id="inp-manual-received" type="number" min="0" step="0.01"
+             placeholder="Amount">
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="form-section">
+    <div class="form-section-title">Notes</div>
+    <div class="form-group">
+      <textarea id="inp-notes" rows="2"></textarea>
+    </div>
+  </div>
+</div><!-- /form-panel -->
+
+<!-- Action Buttons -->
+<div class="action-row">
+  <button id="btn-reset" class="btn-reset">↺ Reset</button>
+  <button id="btn-preview" class="btn-reset">👁 Preview</button>
+  <button id="btn-download-pdf-main" class="btn-download-pdf" style="flex:1;">⬇ PDF</button>
+  <button id="btn-download-img-main" class="btn-download-img" style="flex:1;">⬇ Image</button>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal">
+  <div class="preview-toolbar">
+    <button id="btn-close-preview" class="btn-reset">✕ Close</button>
+    <div style="display:flex; gap:10px; flex:1; max-width: 400px;">
+      <button id="btn-download-pdf" class="btn-download-pdf" style="flex:1;">⬇ PDF</button>
+      <button id="btn-download-img" class="btn-download-img" style="flex:1;">⬇ Image</button>
+    </div>
+  </div>
+  <div class="preview-content">
+    <div id="preview-wrapper">
+      <iframe id="preview-frame"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- Datalist for Service Autofill -->
+<datalist id="common-services">
+  <option value="14-Day Closed Testing Service">
+  <option value="App Store Optimization (ASO)">
+  <option value="UI/UX Review & Feedback">
+  <option value="Bug Tracking & Fixing">
+  <option value="Store Listing Setup">
+  <option value="Beta Tester Recruitment">
+  <option value="Performance & Load Testing">
+  <option value="Security Audit">
+</datalist>
+
+<script src="invoice.js?v=8"></script>
+</body>
+</html>
